@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/nav_my_files">
+
+    <fragment
+        android:id="@+id/nav_my_files"
+        android:name="com.computer.skyvault.ui.myfiles.MyFilesFragment"
+        android:label="@string/menu_my_files"
+        tools:layout="@layout/fragment_recent" />
+
+    <fragment
+        android:id="@+id/nav_recent"
+        android:name="com.computer.skyvault.ui.recent.RecentFragment"
+        android:label="@string/menu_recent"
+        tools:layout="@layout/fragment_my_files" />
+
+    <fragment
+        android:id="@+id/nav_shared"
+        android:name="com.computer.skyvault.ui.shared.SharedFragment"
+        android:label="@string/menu_shared"
+        tools:layout="@layout/fragment_shared" />
+
+    <fragment
+        android:id="@+id/nav_starred"
+        android:name="com.computer.skyvault.ui.starred.StarredFragment"
+        android:label="@string/menu_starred"
+        tools:layout="@layout/fragment_recent" />
+
+    <fragment
+        android:id="@+id/nav_categories"
+        android:name="com.computer.skyvault.ui.categories.CategoriesFragment"
+        android:label="@string/menu_categories"
+        tools:layout="@layout/fragment_my_files" />
+
+    <fragment
+        android:id="@+id/nav_trash"
+        android:name="com.computer.skyvault.ui.trash.TrashFragment"
+        android:label="@string/menu_trash"
+        tools:layout="@layout/fragment_shared" />
+</navigation>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="CustomNavigationView">
+        <attr name="android:background" />
+        <attr name="headerBackground" format="reference|color" />
+        <attr name="menu" format="reference" />
+        <attr name="itemIconSize" format="dimension" />
+        <attr name="itemTextColor" format="color" />
+        <attr name="itemTextAppearance" format="reference" />
+    </declare-styleable>
+</resources>
