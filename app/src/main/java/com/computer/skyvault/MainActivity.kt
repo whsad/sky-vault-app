@@ -1,6 +1,7 @@
 package com.computer.skyvault
 
 import android.os.Bundle
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
@@ -9,77 +10,31 @@ import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
-import com.computer.skyvault.databinding.ActivityMainBinding
-import com.computer.skyvault.model.DividerItem
-import com.computer.skyvault.model.HeaderItem
-import com.computer.skyvault.model.MenuItem
-import com.computer.skyvault.model.NavItem
+import com.computer.skyvault.common.recycleitem.DividerItem
+import com.computer.skyvault.common.recycleitem.HeaderItem
+import com.computer.skyvault.common.recycleitem.MenuItem
+import com.computer.skyvault.common.recycleitem.NavItem
 import com.computer.skyvault.ui.customview.CustomNavigationView
+import com.google.android.material.snackbar.Snackbar
+import android.view.KeyEvent
+import com.computer.skyvault.databinding.ModuleActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
-
     private lateinit var appBarConfiguration: AppBarConfiguration
-    private lateinit var binding: ActivityMainBinding
+    private lateinit var binding: ModuleActivityMainBinding
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var customNavView: CustomNavigationView
     private lateinit var navController: NavController
-
-    /*    override fun onCreate(savedInstanceState: Bundle?) {
-            super.onCreate(savedInstanceState)
-
-            binding = ActivityMainBinding.inflate(layoutInflater)
-            setContentView(binding.root)
-
-            drawerLayout = binding.drawerLayout
-            customNavView = binding.customNavView
-
-
-            val toolbar = binding.appBarMain.toolbar
-            setSupportActionBar(toolbar)
-
-            toolbar.setNavigationOnClickListener {
-                if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
-                    drawerLayout.closeDrawer(GravityCompat.START)
-                } else {
-                    drawerLayout.openDrawer(GravityCompat.START)
-                }
-            }
-
-            initCustomNavigationView()
-
-
-            // 设置点
-    //        window.statusBarColor = Color.WHITE
-    //        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
-    //
-    //        setSupportActionBar(binding.appBarMain.toolbar)
-    //
-    //        binding.appBarMain.fab.setOnClickListener { view ->
-    //            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-    //                .setAction("Action", null)
-    //                .setAnchorView(R.id.fab).show()
-    //        }
-    //        val drawerLayout: DrawerLayout = binding.drawerLayout
-    //        val navView: NavigationView = binding.navView
-    //        val navController = findNavController(R.id.nav_host_fragment_content_main)
-    //        // Passing each menu ID as a set of Ids because each
-    //        // menu should be considered as top level destinations.
-    //        appBarConfiguration = AppBarConfiguration(
-    //            setOf(
-    //                R.id.nav_my_files, R.id.nav_recent, R.id.nav_shared, R.id.nav_starred, R.id.nav_categories, R.id.nav_trash
-    //            ), drawerLayout
-    //        )
-    //        setupActionBarWithNavController(navController, appBarConfiguration)
-    //        customNavView.setupWithNavController(navController)
-        }*/
+    private var backPressedTime: Long = 0
+    private var isAtHomeDestination = true
+    private val homeDestinationId = R.id.nav_my_files
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        binding = ActivityMainBinding.inflate(layoutInflater)
+        binding = ModuleActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val toolbar = binding.appBarMain.toolbar  // 使用 MaterialToolbar 的 ID
+        val toolbar = binding.appBarMain.toolbar
         setSupportActionBar(toolbar)
 
         drawerLayout = binding.drawerLayout
@@ -87,10 +42,11 @@ class MainActivity : AppCompatActivity() {
 
         navController = findNavController(R.id.nav_host_fragment_content_main)
 
-        // 设置 ActionBarDrawerToggle 图标
-        setupDrawerToggle(toolbar)
         // 初始化自定义导航视图
         initCustomNavigationView()
+
+        // 监听导航目的地变化
+        setupDestinationChangedListener()
 
         // 配置 AppBarConfiguration
         appBarConfiguration = AppBarConfiguration(
@@ -100,6 +56,9 @@ class MainActivity : AppCompatActivity() {
             ), drawerLayout
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
+
+        // 处理返回键
+        setupOnBackPressed()
     }
 
     private fun initCustomNavigationView() {
@@ -122,57 +81,123 @@ class MainActivity : AppCompatActivity() {
         )
         customNavView.setMenuItems(menuItems)
 
-        // 设置选中项
-        customNavView.setSelectedItem(R.id.nav_my_files)
+        // 设置当前选中项
+        val currentDestination = navController.currentDestination?.id
+        if (currentDestination != null) {
+            customNavView.setSelectedItem(currentDestination)
+        } else {
+            customNavView.setSelectedItem(R.id.nav_my_files)
+        }
 
         // 设置点击监听
         customNavView.setOnNavigationItemSelectedListener { itemId ->
-            // 使用 Navigation Framework 导航
-            if (navController.currentDestination?.id != itemId) {
-                navController.navigate(itemId)
-                // 更新选中状态
-                navController.addOnDestinationChangedListener { _, destination, _ ->
-                    customNavView.setSelectedItem(destination.id)
-                }
-            }
-            drawerLayout.closeDrawer(GravityCompat.START)
+            handleNavigationItemClick(itemId)
+        }
+
+        // 设置上传按钮点击
+        customNavView.setOnUploadClickListener {
+            // 处理上传文件逻辑
+            Snackbar.make(binding.root, "Upload files clicked", Snackbar.LENGTH_SHORT).show()
         }
     }
 
-    private fun setupDrawerToggle(toolbar: androidx.appcompat.widget.Toolbar) {
-        // 设置导航图标为汉堡菜单
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_hamburger_button)
-
-        // 设置点击事件
-        toolbar.setNavigationOnClickListener {
-            drawerLayout.openDrawer(GravityCompat.START)
+    private fun handleNavigationItemClick(itemId: Int) {
+        // 如果点击的是当前已选中的项，只关闭抽屉
+        if (navController.currentDestination?.id == itemId) {
+            drawerLayout.closeDrawer(GravityCompat.START)
+            return
         }
+
+        // 导航到目标 Fragment
+        when (itemId) {
+            R.id.nav_my_files -> {
+                // 导航到 My Files，并清除返回栈
+                navController.navigate(itemId)
+            }
+            R.id.nav_recent -> {
+                navController.navigate(itemId)
+            }
+            R.id.nav_shared -> {
+                navController.navigate(itemId)
+            }
+            R.id.nav_starred -> {
+                navController.navigate(itemId)
+            }
+            R.id.nav_categories -> {
+                navController.navigate(itemId)
+            }
+            R.id.nav_trash -> {
+                navController.navigate(itemId)
+            }
+        }
+
+        // 关闭抽屉
+        drawerLayout.closeDrawer(GravityCompat.START)
+    }
+
+    private fun setupDestinationChangedListener() {
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            // 更新侧边栏选中状态
+            customNavView.setSelectedItem(destination.id)
+
+            // 检查是否在首页
+            isAtHomeDestination = destination.id == homeDestinationId
+
+            // 更新 ActionBar
+            supportActionBar?.let {
+                it.title = when (destination.id) {
+                    R.id.nav_my_files -> "My Files"
+                    R.id.nav_recent -> "Recent"
+                    R.id.nav_shared -> "Shared"
+                    R.id.nav_starred -> "Starred"
+                    R.id.nav_categories -> "Categories"
+                    R.id.nav_trash -> "Trash"
+                    else -> getString(R.string.app_name)
+                }
+            }
+        }
+    }
+
+    private fun setupOnBackPressed() {
+        // 添加返回键回调
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                handleBackPress()
+            }
+        })
+    }
+
+    private fun handleBackPress() {
+        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START)
+            return
+        }
+
+        // 如果当前不在首页，返回首页
+        if (!isAtHomeDestination) {
+            navController.navigate(R.id.nav_my_files)
+            return
+        }
+
+        // 如果在首页，实现双击退出
+        if (backPressedTime + 2000 > System.currentTimeMillis()) {
+            finish()
+        } else {
+            Snackbar.make(binding.root, "Press back again to exit", Snackbar.LENGTH_SHORT).show()
+            backPressedTime = System.currentTimeMillis()
+        }
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            handleBackPress()
+            return true
+        }
+        return super.onKeyDown(keyCode, event)
     }
 
     override fun onSupportNavigateUp(): Boolean {
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
-    }
-
-//    @Deprecated("Deprecated in Java")
-//    override fun onBackPressed() {
-//        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
-//            drawerLayout.closeDrawer(GravityCompat.START)
-//        } else {
-//            super.onBackPressed()
-//        }
-//    }
-
-    fun openDrawer() {
-        if (!drawerLayout.isDrawerOpen(GravityCompat.START)) {
-            drawerLayout.openDrawer(GravityCompat.START)
-        }
-    }
-
-    fun closeDrawer() {
-        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
-            drawerLayout.closeDrawer(GravityCompat.START)
-        }
     }
 }

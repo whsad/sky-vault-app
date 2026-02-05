@@ -7,11 +7,11 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import com.computer.skyvault.databinding.FragmentTrashBinding
+import com.computer.skyvault.databinding.ModuleFragmentTrashBinding
 
 class TrashFragment : Fragment() {
 
-    private var _binding: FragmentTrashBinding? = null
+    private var _binding: ModuleFragmentTrashBinding? = null
 
     // This property is only valid between onCreateView and
     // onDestroyView.
@@ -25,7 +25,7 @@ class TrashFragment : Fragment() {
         val myFilesViewModel =
             ViewModelProvider(this)[TrashViewModel::class.java]
 
-        _binding = FragmentTrashBinding.inflate(inflater, container, false)
+        _binding = ModuleFragmentTrashBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
         val textView: TextView = binding.textTrash

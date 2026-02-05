@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Color
 import android.util.AttributeSet
 import android.view.LayoutInflater
+import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatImageView
@@ -11,11 +12,11 @@ import androidx.core.content.withStyledAttributes
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.computer.skyvault.R
-import com.computer.skyvault.adapter.NavMenuAdapter
-import com.computer.skyvault.databinding.CustomNavigationViewBinding
-import com.computer.skyvault.model.HeaderItem
-import com.computer.skyvault.model.MenuItem
-import com.computer.skyvault.model.NavItem
+import com.computer.skyvault.adapter.RecycleItemCustomNavAdapter
+import com.computer.skyvault.databinding.ModuleCustomNavigationViewBinding
+import com.computer.skyvault.common.recycleitem.HeaderItem
+import com.computer.skyvault.common.recycleitem.MenuItem
+import com.computer.skyvault.common.recycleitem.NavItem
 
 class CustomNavigationView @JvmOverloads constructor(
     context: Context,
@@ -23,19 +24,21 @@ class CustomNavigationView @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : LinearLayout(context, attrs, defStyleAttr) {
 
-    private lateinit var binding: CustomNavigationViewBinding
+    private lateinit var binding: ModuleCustomNavigationViewBinding
 
     private lateinit var navHeaderLinearLayout: LinearLayout
     private lateinit var recyclerViewMenu: RecyclerView
     private lateinit var imageViewPortrait: AppCompatImageView
     private lateinit var textViewNickname: TextView
     private lateinit var textViewEmail: TextView
+    private lateinit var uploadButton: Button
 
     private var menuItems: List<NavItem> = emptyList()
-    private var adapter: NavMenuAdapter? = null
+    private var adapter: RecycleItemCustomNavAdapter? = null
     private var selectedItemId: Int = -1
     private var onNavigationItemSelectedListener: ((Int) -> Unit)? = null
     private var onHeaderClickListener: (() -> Unit)? = null
+    private var onUploadClickListener: (() -> Unit)? = null
 
 
     init {
@@ -46,24 +49,27 @@ class CustomNavigationView @JvmOverloads constructor(
     }
 
     private fun setupView() {
-        binding = CustomNavigationViewBinding.inflate(LayoutInflater.from(context), this, true)
+        binding = ModuleCustomNavigationViewBinding.inflate(LayoutInflater.from(context), this, true)
 
-        // 初始化试图
+        // 初始化视图
         navHeaderLinearLayout = binding.navHeader
         recyclerViewMenu = binding.menuRecycleView
         imageViewPortrait = binding.portrait
         textViewNickname = binding.nickname
         textViewEmail = binding.email
+        uploadButton = binding.btnUploadFiles
 
         // 设置 RecyclerView
         recyclerViewMenu.layoutManager = LinearLayoutManager(context)
-//        recyclerViewMenu.addItemDecoration(
-//            DividerItemDecoration(context, DividerItemDecoration.VERTICAL)
-//        )
 
         // 设置头部点击事件
         navHeaderLinearLayout.setOnClickListener {
             onHeaderClickListener?.invoke()
+        }
+
+        // 设置上传按钮点击事件
+        uploadButton.setOnClickListener {
+            onUploadClickListener?.invoke()
         }
     }
 
@@ -87,8 +93,7 @@ class CustomNavigationView @JvmOverloads constructor(
 
     fun setMenuItems(items: List<NavItem>) {
         menuItems = items
-        adapter = NavMenuAdapter(items) { itemId ->
-//            setSelectedItem(itemId)
+        adapter = RecycleItemCustomNavAdapter(items) { itemId ->
             onNavigationItemSelectedListener?.invoke(itemId)
         }
         recyclerViewMenu.adapter = adapter
@@ -119,6 +124,10 @@ class CustomNavigationView @JvmOverloads constructor(
 
     fun setOnHeaderClickListener(listener: () -> Unit) {
         onHeaderClickListener = listener
+    }
+
+    fun setOnUploadClickListener(listener: () -> Unit) {
+        onUploadClickListener = listener
     }
 
     fun getMenuItemById(itemId: Int): MenuItem? {

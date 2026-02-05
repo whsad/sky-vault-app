@@ -7,11 +7,11 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import com.computer.skyvault.databinding.FragmentCategoriesBinding
+import com.computer.skyvault.databinding.ModuleFragmentCategoriesBinding
 
 class CategoriesFragment : Fragment() {
 
-    private var _binding: FragmentCategoriesBinding? = null
+    private var _binding: ModuleFragmentCategoriesBinding? = null
 
     // This property is only valid between onCreateView and
     // onDestroyView.
@@ -25,7 +25,7 @@ class CategoriesFragment : Fragment() {
         val myFilesViewModel =
             ViewModelProvider(this)[CategoriesViewModel::class.java]
 
-        _binding = FragmentCategoriesBinding.inflate(inflater, container, false)
+        _binding = ModuleFragmentCategoriesBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
         val textView: TextView = binding.textCategories
