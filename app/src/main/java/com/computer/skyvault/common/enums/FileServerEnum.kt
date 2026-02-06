@@ -28,47 +28,58 @@ enum class FileCategoryEnum(val code: Int, val category: String) {
 enum class FileTypeEnum(
     val category: FileCategoryEnum,
     val typeCode: Int,
-    val suffix: List<String>
+    val suffix: List<String>,
+    val storageSubdir: String
 ) {
     // 图片 1:图片
     IMAGE(FileCategoryEnum.IMAGE, 1,
-        listOf(".jpeg", ".jfif", ".jpg", ".png", ".gif", ".bmp", ".dds", ".psd", ".pdt", ".webp", ".xmp", ".svg", ".tiff")),
+        listOf(".jpeg", ".jfif", ".jpg", ".png", ".gif", ".bmp", ".dds", ".psd", ".pdt", ".webp", ".xmp", ".svg", ".tiff"),
+        "images"),
     // 视频 2:视频
     VIDEO(FileCategoryEnum.VIDEO, 2,
-        listOf(".mp4", ".avi", ".rmvb", ".mkv", ".mov")),
+        listOf(".mp4", ".avi", ".rmvb", ".mkv", ".mov"),
+        "videos"),
     // 音频 3:音频
     AUDIO(FileCategoryEnum.AUDIO, 3,
-        listOf(".mp3", ".m4a", ".wav", ".wma", ".mp2", ".flac", ".midi", ".ra", ".ape", ".aac", ".cda")),
+        listOf(".mp3", ".m4a", ".wav", ".wma", ".mp2", ".flac", ".midi", ".ra", ".ape", ".aac", ".cda"),
+        "audios"),
     // PDF 4:pdf
     PDF(FileCategoryEnum.DOCUMENT, 4,
-        listOf(".pdf")),
+        listOf(".pdf"),
+        "documents"),
     // WORD 5:word
     WORD(FileCategoryEnum.DOCUMENT, 5,
-        listOf(".docx")),
+        listOf(".docx"),
+        "documents"),
     // EXCEL 6:excel
     EXCEL(FileCategoryEnum.DOCUMENT, 6,
-        listOf(".xlsx", ".csv")),
+        listOf(".xlsx", ".csv"),
+        "documents"),
     // TXT 7:txt
     TXT(FileCategoryEnum.DOCUMENT, 7,
-        listOf(".txt")),
+        listOf(".txt"),
+        "documents"),
     // CODE 8:code
     CODE(FileCategoryEnum.OTHER, 8,
         listOf(
             ".h", ".c", ".hpp", ".hxx", ".cpp", ".cc", ".c++", ".cxx", ".m", ".o", ".s", ".dll", ".cs",
             ".java", ".class", ".js", ".ts", ".css", ".scss", ".vue", ".jsx", ".sql", ".md", ".json", ".html", ".xml"
-        )),
+        ),"codes"),
     // ZIP 9:zip
     ZIP(FileCategoryEnum.OTHER, 9,
-        listOf("rar", ".zip", ".7z", ".cab", ".arj", ".lzh", ".tar", ".gz", ".ace", ".uue", ".bz", ".jar", ".iso", ".mpq")),
+        listOf("rar", ".zip", ".7z", ".cab", ".arj", ".lzh", ".tar", ".gz", ".ace", ".uue", ".bz", ".jar", ".iso", ".mpq"),
+        "archives"),
     // APP 10:App
     APP(FileCategoryEnum.APP, 10,
-        listOf(".exe", ".msi", ".dmg", ".deb", ".rpm", ".apk", ".ipa", ".app", ".bat", ".sh", ".cmd")),
+        listOf(".exe", ".msi", ".dmg", ".deb", ".rpm", ".apk", ".ipa", ".app", ".bat", ".sh", ".cmd"),
+        "applications"),
     // BT_SEEDS 11:种子文件
     BT_SEEDS(FileCategoryEnum.BT_SEEDS, 11,
-        listOf(".torrent")),
+        listOf(".torrent"),
+        "bt_seeds"),
     // OTHERS 12:其他
     OTHERS(FileCategoryEnum.OTHER, 12,
-        emptyList());
+        emptyList(), "others");
 
     /**
      * 根据文件后缀获取文件类型
@@ -82,7 +93,7 @@ enum class FileTypeEnum(
         /**
          * 根据类型码获取文件类型
          */
-        fun getByType(typeCode: Int): FileTypeEnum? {
+        fun getByType(typeCode: Int?): FileTypeEnum? {
             return FileTypeEnum.entries.find { it.typeCode == typeCode }
         }
     }
@@ -96,6 +107,11 @@ enum class FileTypeEnum(
      * 获取类型码
      */
     val type: Int get() = typeCode
+
+    /**
+     * 获取存储子目录名称
+     */
+    val storageDirectory: String get() = storageSubdir
 }
 
 enum class UploadStatusEnum(val status: String) {

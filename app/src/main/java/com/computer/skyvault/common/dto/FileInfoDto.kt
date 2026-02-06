@@ -12,6 +12,13 @@ data class LoadFileListRequest(
     val filePid: String? = "0"
 )
 
+// 获取文件封面
+data class GetFileCoverRequest(
+    val month: String,      // 2026-2
+    val imageFolder: String, // videos
+    val imageName: String   // fileId.png
+)
+
 // 上传文件请求
 data class UploadFileRequest(
     val fileId: String? = null,

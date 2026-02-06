@@ -4,10 +4,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.computer.skyvault.R
 import com.computer.skyvault.common.enums.FileTypeEnum
 import com.computer.skyvault.common.recycleitem.FileItem
 import com.computer.skyvault.databinding.ModuleRecycleItemMyFilesFileFolderListBinding
+import com.computer.skyvault.service.FileInfoService
 import com.computer.skyvault.utils.DateUtils
 
 private const val TAG = "RecycleItemMyFilesFileF"
@@ -58,10 +61,48 @@ class RecycleItemMyFilesFileFolderListAdapter(
         }
 
         fun bindItem(item: FileItem) {
-            // 设置文件图标
-            val iconRes = when (item.fileType) {
-                FileTypeEnum.IMAGE.typeCode -> R.drawable.image1
-                FileTypeEnum.VIDEO.typeCode -> R.drawable.ic_video_file
+            // 根据文件类型设置封面图
+            val fileType = FileTypeEnum.getByType(item.fileType)
+            when (fileType) {
+                FileTypeEnum.IMAGE, FileTypeEnum.VIDEO -> {
+                    val imageUrl = FileInfoService.getFileCoverPath(item.fileCover.toString())
+
+                    // 使用 Glide 加载封面图（仅 IMAGE/VIDEO）
+                    Glide.with(ivFileCover)
+                        .load(imageUrl)
+                        .placeholder(R.drawable.ic_file_type_folder)  // 加载中占位图
+                        .error(R.drawable.ic_file_type_other)         // 失败回退图
+                        .diskCacheStrategy(DiskCacheStrategy.ALL)
+                        .into(ivFileCover)
+                }
+                else -> {
+                    // 其他类型：直接设置静态图标资源
+                    val iconRes = when (fileType) {
+                        FileTypeEnum.AUDIO -> R.drawable.ic_file_type_audio
+                        FileTypeEnum.PDF -> R.drawable.ic_file_type_pdf
+                        FileTypeEnum.WORD -> R.drawable.ic_file_type_word
+                        FileTypeEnum.EXCEL -> R.drawable.ic_file_type_excel
+                        FileTypeEnum.TXT -> R.drawable.ic_file_type_txt
+                        FileTypeEnum.CODE -> R.drawable.ic_file_type_code
+                        FileTypeEnum.ZIP -> R.drawable.ic_file_type_zip
+                        FileTypeEnum.APP -> R.drawable.ic_file_type_app
+                        FileTypeEnum.BT_SEEDS -> R.drawable.ic_file_type_bt
+                        FileTypeEnum.OTHERS -> R.drawable.ic_file_type_other
+                        else -> R.drawable.ic_file_type_folder
+                    }
+                    ivFileCover.setImageResource(iconRes)
+                }
+            }
+
+  /*          val iconRes = when (item.fileType) {
+                FileTypeEnum.IMAGE.typeCode -> {
+                    getFileCover(ivFileCover, item.fileCover)
+                    R.drawable.ic_file_type_folder // 初始占位图标（避免空白）
+                }
+                FileTypeEnum.VIDEO.typeCode -> {
+                    getFileCover(ivFileCover, item.fileCover)
+                    R.drawable.ic_file_type_folder
+                }
                 FileTypeEnum.AUDIO.typeCode -> R.drawable.ic_file_type_audio
                 FileTypeEnum.PDF.typeCode -> R.drawable.ic_file_type_pdf
                 FileTypeEnum.WORD.typeCode -> R.drawable.ic_file_type_word
@@ -74,7 +115,7 @@ class RecycleItemMyFilesFileFolderListAdapter(
                 FileTypeEnum.OTHERS.typeCode -> R.drawable.ic_file_type_other
                 else -> R.drawable.ic_file_type_folder
             }
-            ivFileCover.setImageResource(iconRes)
+            ivFileCover.setImageResource(iconRes)*/
             // 设置文件名称
             tvFileName.text = item.fileName
             // 设置是否收藏
@@ -82,7 +123,7 @@ class RecycleItemMyFilesFileFolderListAdapter(
             // 设置修改时间
             tvUpdateTime.text = DateUtils.formatIsoDateTime(item.lastUpdateTime)
             // 设置文件大小
-            tvFileSize.text = if (iconRes == R.drawable.ic_file_type_folder) "" else item.fileSize.toString()
+            tvFileSize.text = if (fileType == null) "" else item.fileSize.toString()
             // 动态更新操作图标
             val ibOperateIcon = if (isSelectionMode && item.fileId.let { selectedItems.contains(it) } == true) {
                 R.drawable.ic_checked  // 选中时的对勾图标
@@ -148,6 +189,59 @@ class RecycleItemMyFilesFileFolderListAdapter(
 
     override fun getItemCount(): Int = items.size
 
+    private fun notifyItemChangedByFileId(fileId: String) {
+        val position = items.indexOfFirst { it.fileId == fileId }
+        if (position != -1) {
+            notifyItemChanged(position)
+        }
+    }
+
+    private fun notifySelectionChanged() {
+        val selectedCount = selectedItems.size
+        val selectedItemsList = getSelectedItems()
+        onSelectionChanged?.invoke(selectedItemsList)
+        onSelectionModeChanged?.invoke(isSelectionMode, selectedCount)
+    }
+
+//    // ✅ 修改为可空 fileId，并在内部安全处理
+//    private fun getFileCover(
+//        ivFileCover: AppCompatImageView,
+//        fileCoverPath: String
+//    ) {
+//        FileInfoService.getFileCover(
+//            fileCoverPath,
+//            onSuccess = { bytes ->
+//                // ✅ 使用 ViewHolder 所属 Fragment 的上下文（通过 binding.root.context）
+//                ivFileCover.context?.let { ctx ->
+//                    android.os.Handler(ctx.mainLooper).post {
+//                        ivFileCover.setImageBitmap(BitmapFactory.decodeByteArray(bytes, 0, bytes.size))
+//                    }
+//                } ?: run {
+//                    ivFileCover.setImageResource(R.drawable.ic_file_type_other)
+//                }
+//            },
+//            onFailure = {
+//                ivFileCover.setImageResource(R.drawable.ic_file_type_other)
+//            }
+//        )
+//    }
+
+//    private fun getFileCover(ivFileCover: AppCompatImageView, lastUpdateTime: String?, storageSubdir: String, fileId: String) {
+//
+//        FileInfoService.getFileCover(
+//            GetFileCoverRequest(lastUpdateTime.toString(), storageSubdir, fileId),
+//            onSuccess = { bytes ->
+//                requireActivity().runOnUiThread {
+//                    ivFileCover.setImageBitmap(BitmapFactory.decodeByteArray(bytes, 0, bytes.size))
+//                }
+//            },
+//            onFailure = {
+//                // 失败：回退到默认图标
+//                ivFileCover.setImageResource(R.drawable.ic_file_type_other)
+//            }
+//        )
+//    }
+
     fun toggleSelection(fileId: String) {
         if (selectedItems.contains(fileId)) {
             selectedItems.remove(fileId)
@@ -161,20 +255,6 @@ class RecycleItemMyFilesFileFolderListAdapter(
         if (selectedItems.isEmpty()) {
             exitSelectionMode()
         }
-    }
-
-    private fun notifyItemChangedByFileId(fileId: String) {
-        val position = items.indexOfFirst { it.fileId == fileId }
-        if (position != -1) {
-            notifyItemChanged(position)
-        }
-    }
-
-    private fun notifySelectionChanged() {
-        val selectedCount = selectedItems.size
-        val selectedItemsList = getSelectedItems()
-        onSelectionChanged?.invoke(selectedItemsList)
-        onSelectionModeChanged?.invoke(isSelectionMode, selectedCount)
     }
 
     fun enterSelectionMode() {

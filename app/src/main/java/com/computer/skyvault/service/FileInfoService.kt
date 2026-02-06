@@ -32,4 +32,11 @@ object FileInfoService {
             }
         )
     }
+
+    fun getFileCoverPath(
+        fileCoverPath: String
+    ): String {
+        val normalizedPath = fileCoverPath.replace("\\\\", "/").replace("\\", "/")
+        return "${ApiClient.BASE_URL}$PREFIX/getFileCover/$normalizedPath"
+    }
 }

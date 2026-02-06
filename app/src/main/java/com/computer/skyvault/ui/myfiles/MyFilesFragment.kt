@@ -106,12 +106,52 @@ class MyFilesFragment : Fragment() {
                 )
 
                 loadFileList(request, loginInfo.access_token)
+
+                binding.btnNewFolder.setOnClickListener {
+                    showCreateFolderDialog()
+                }
             } ?: run {
                 // todo 如果没有登录信息
 //                Log.w(TAG, "No login info available, attempting to login...")
 //                performLogin()
             }
         }
+    }
+
+    private fun showCreateFolderDialog() {
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(requireContext())
+        val inflater = layoutInflater
+        val view = inflater.inflate(R.layout.module_dialog_create_folder, null)
+        dialog.setView(view)
+
+        val etFolderName = view.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etFolderName)
+        val tilFolderName = view.findViewById<com.google.android.material.textfield.TextInputLayout>(R.id.tilFolderName)
+
+        dialog.setPositiveButton("完成") { _, _ ->
+            val folderName = etFolderName.text.toString().trim()
+            if (folderName.isEmpty()) {
+                tilFolderName.error = "文件夹名称不能为空"
+                return@setPositiveButton
+            }
+            // 调用创建文件夹 API
+//            createFolder(folderName)
+        }
+
+        dialog.setNegativeButton("返回") { dialog, _ ->
+            dialog.dismiss()
+        }
+
+        val alertDialog = dialog.create()
+        // 设置对话框宽度为 80% 屏幕宽（更符合截图样式）
+        alertDialog.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.8).toInt(),
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        alertDialog.show()
+    }
+
+    private fun createFolder(req: LoadFileListRequest, token: String) {
+
     }
 
     private fun loadFileList(req: LoadFileListRequest, token: String) {
@@ -308,4 +348,6 @@ class MyFilesFragment : Fragment() {
         super.onDestroyView()
         _binding = null
     }
+
+
 }

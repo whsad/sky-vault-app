@@ -46,6 +46,7 @@ dependencies {
     implementation(libs.gson)
     implementation(libs.okhttp)
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.9.0")
+    implementation("com.github.bumptech.glide:glide:4.16.0")
     implementation(libs.google.material)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
