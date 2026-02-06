@@ -1,9 +1,18 @@
 package com.computer.skyvault
 
+import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
+import android.view.KeyEvent
+import android.view.View
+import android.view.animation.Animation
+import android.view.animation.AnimationUtils
+import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
+import androidx.core.view.isGone
+import androidx.core.view.isVisible
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.navigation.NavController
 import androidx.navigation.findNavController
@@ -14,14 +23,17 @@ import com.computer.skyvault.common.recycleitem.DividerItem
 import com.computer.skyvault.common.recycleitem.HeaderItem
 import com.computer.skyvault.common.recycleitem.MenuItem
 import com.computer.skyvault.common.recycleitem.NavItem
-import com.computer.skyvault.ui.customview.CustomNavigationView
-import com.google.android.material.snackbar.Snackbar
-import android.view.KeyEvent
 import com.computer.skyvault.databinding.ModuleActivityMainBinding
+import com.computer.skyvault.ui.customview.CustomNavigationView
+import com.computer.skyvault.ui.myfiles.MyFilesFragment
+import com.google.android.material.snackbar.Snackbar
+
+private const val TAG = "MainActivity"
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var appBarConfiguration: AppBarConfiguration
+
     private lateinit var binding: ModuleActivityMainBinding
+    private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var customNavView: CustomNavigationView
     private lateinit var navController: NavController
@@ -29,10 +41,32 @@ class MainActivity : AppCompatActivity() {
     private var isAtHomeDestination = true
     private val homeDestinationId = R.id.nav_my_files
 
+    // 顶部导航栏
+    private lateinit var topSelectionBar: View
+    private lateinit var tvSelectionCount: TextView
+    private lateinit var tvCancel: TextView
+    private lateinit var tvCheckAll: TextView
+    private var isCheckAll = false
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        window.statusBarColor = Color.WHITE
+        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+
         binding = ModuleActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // 绑定顶部操作栏
+        topSelectionBar = binding.appBarMain.topSelectionBar.root
+        tvSelectionCount = binding.appBarMain.topSelectionBar.tvSelectionCount
+        tvCancel = binding.appBarMain.topSelectionBar.tvCancel
+        tvCheckAll = binding.appBarMain.topSelectionBar.tvCheckAll
+
+        // 设置按钮点击
+        tvCancel.setOnClickListener { exitSelectionMode() }
+        tvCheckAll.setOnClickListener { selectAllInCurrentFragment() }
 
         val toolbar = binding.appBarMain.toolbar
         setSupportActionBar(toolbar)
@@ -59,6 +93,51 @@ class MainActivity : AppCompatActivity() {
 
         // 处理返回键
         setupOnBackPressed()
+    }
+
+    // 由 Fragment 触发（推荐通过接口或 Event）
+    fun showTopSelectionBar(selectedCount: Int) {
+        if (topSelectionBar.isGone) {
+            topSelectionBar.visibility = View.VISIBLE
+            val anim = AnimationUtils.loadAnimation(this, R.anim.slide_in_from_top)
+            topSelectionBar.startAnimation(anim)
+        }
+        tvSelectionCount.text = "已选中 $selectedCount 个文件"
+    }
+
+    fun hideTopSelectionBar() {
+        if (topSelectionBar.isVisible) {
+            val anim = AnimationUtils.loadAnimation(this, R.anim.slide_out_to_top)
+            anim.setAnimationListener(object : Animation.AnimationListener {
+                override fun onAnimationEnd(animation: Animation?) {
+                    topSelectionBar.visibility = View.GONE
+                }
+
+                override fun onAnimationStart(animation: Animation?) {}
+                override fun onAnimationRepeat(animation: Animation?) {}
+            })
+            topSelectionBar.startAnimation(anim)
+        }
+    }
+
+    private fun getCurrentMyFilesFragment(): MyFilesFragment? {
+        val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main) as? androidx.navigation.fragment.NavHostFragment
+        return navHost?.childFragmentManager?.fragments?.firstOrNull() as? MyFilesFragment
+    }
+
+    private fun exitSelectionMode() {
+        getCurrentMyFilesFragment()?.exitSelectionMode()
+        isCheckAll = false
+        tvCheckAll.text = "全选"
+        tvSelectionCount.text = "已选中 0 个文件"
+        Log.d(TAG, "exitSelectionMode: 取消已被点击")
+    }
+
+    private fun selectAllInCurrentFragment() {
+        getCurrentMyFilesFragment()?.checkAll(isCheckAll)
+        isCheckAll = !isCheckAll
+        tvCheckAll.text = if (isCheckAll) "取消全选" else "全选"
+        Log.d(TAG, "selectAllInCurrentFragment: 全选已被点击")
     }
 
     private fun initCustomNavigationView() {
@@ -114,18 +193,23 @@ class MainActivity : AppCompatActivity() {
                 // 导航到 My Files，并清除返回栈
                 navController.navigate(itemId)
             }
+
             R.id.nav_recent -> {
                 navController.navigate(itemId)
             }
+
             R.id.nav_shared -> {
                 navController.navigate(itemId)
             }
+
             R.id.nav_starred -> {
                 navController.navigate(itemId)
             }
+
             R.id.nav_categories -> {
                 navController.navigate(itemId)
             }
+
             R.id.nav_trash -> {
                 navController.navigate(itemId)
             }
@@ -168,6 +252,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun handleBackPress() {
+        // 如果当前是 MyFilesFragment 且处于选择模式 → 退出选择模式
+        if (topSelectionBar.isVisible) {
+            exitSelectionMode()
+            return
+        }
+
+        // 否则按原逻辑处理
         if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
             drawerLayout.closeDrawer(GravityCompat.START)
             return
@@ -179,7 +270,7 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        // 如果在首页，实现双击退出
+        // 首页双击退出
         if (backPressedTime + 2000 > System.currentTimeMillis()) {
             finish()
         } else {

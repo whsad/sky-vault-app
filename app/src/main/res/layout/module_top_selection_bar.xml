@@ -5,47 +5,40 @@
     android:layout_width="match_parent"
     android:layout_height="56dp"
     android:background="#ffffff"
-    android:elevation="8dp"
     android:orientation="horizontal"
-    android:paddingStart="16dp"
-    android:paddingEnd="16dp"
-    android:visibility="visible">
+    android:gravity="center_vertical"
+    android:visibility="gone">
 
-    <!-- 取消按钮：纯文字，蓝色 -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnCancel"
-        style="@style/Widget.Material3.Button.TextButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="取消"
-        android:textColor="@color/md_theme_primary"
-        android:textSize="16sp"
-        app:iconGravity="text_start"
-        app:iconPadding="0dp"
-        app:rippleColor="@color/md_theme_onSurfaceVariant" />
-
-    <!-- 中间文本：居中、加粗、黑色 -->
     <TextView
-        android:id="@+id/tvSelectionCount"
+        android:id="@+id/tvCancel"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:gravity="center"
-        android:text="已选中 1 个文件"
-        android:textColor="@color/md_theme_onSurface"
-        android:textSize="16sp"
+        android:text="取消"
+        android:textColor="#5282e9"
+        android:textSize="18sp"
         android:textStyle="bold" />
 
-    <!-- 全选按钮：纯文字，蓝色 -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnSelectAll"
-        style="@style/Widget.Material3.Button.TextButton"
-        android:layout_width="wrap_content"
+    <TextView
+        android:id="@+id/tvSelectionCount"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_weight="2"
+        android:gravity="center"
+        android:text="已选中 1 个文件"
+        android:textColor="@color/md_theme_onSurface"
+        android:textSize="22sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvCheckAll"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
         android:text="全选"
-        android:textColor="@color/md_theme_primary"
-        android:textSize="16sp"
-        app:iconGravity="text_start"
-        app:iconPadding="0dp"
-        app:rippleColor="@color/md_theme_onSurfaceVariant" />
+        android:textColor="#5282e9"
+        android:textSize="18sp"
+        android:textStyle="bold" />
 </LinearLayout>

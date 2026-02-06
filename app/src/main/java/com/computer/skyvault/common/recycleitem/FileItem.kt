@@ -4,13 +4,13 @@ import com.google.gson.annotations.SerializedName
 
 data class FileItem(
     @SerializedName("file_id")
-    val fileId: String?,
+    val fileId: String,
     @SerializedName("file_pid")
-    val filePid: String?,
+    val filePid: String,
     @SerializedName("file_size")
-    val fileSize: Long?,
+    val fileSize: Long,
     @SerializedName("file_name")
-    val fileName: String?,
+    val fileName: String,
     @SerializedName("file_cover")
     val fileCover: String?,
     @SerializedName("recovery_time")

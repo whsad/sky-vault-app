@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <HorizontalScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/bottomActionBar"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -41,6 +42,8 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:contentDescription="下载"
+                    android:textColor="@color/black"
+                    app:tint="@color/black"
                     android:src="@drawable/ic_file_download" />
 
                 <TextView
@@ -48,6 +51,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="下载"
+                    android:textColor="@color/black"
                     android:textSize="12sp" />
             </LinearLayout>
 
@@ -64,13 +68,15 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:contentDescription="分享"
-                    android:src="@drawable/ic_menu_shared" />
+                    android:src="@drawable/ic_menu_shared"
+                    app:tint="@color/black" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="分享"
+                    android:textColor="@color/black"
                     android:textSize="12sp" />
             </LinearLayout>
 
@@ -87,6 +93,7 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:contentDescription="删除"
+                    app:tint="@color/black"
                     android:src="@drawable/ic_menu_trash" />
 
                 <TextView
@@ -94,6 +101,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="删除"
+                    android:textColor="@color/black"
                     android:textSize="12sp" />
             </LinearLayout>
 
@@ -110,6 +118,7 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:contentDescription="收藏"
+                    app:tint="@color/black"
                     android:src="@drawable/ic_menu_starred" />
 
                 <TextView
@@ -117,6 +126,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="收藏"
+                    android:textColor="@color/black"
                     android:textSize="12sp" />
             </LinearLayout>
 
@@ -133,6 +143,7 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:contentDescription="重命名"
+                    app:tint="@color/black"
                     android:src="@drawable/ic_file_rename" />
 
                 <TextView
@@ -140,6 +151,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="重命名"
+                    android:textColor="@color/black"
                     android:textSize="12sp" />
             </LinearLayout>
 
@@ -156,6 +168,7 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:contentDescription="移动"
+                    app:tint="@color/black"
                     android:src="@drawable/ic_file_move" />
 
                 <TextView
@@ -163,6 +176,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="移动"
+                    android:textColor="@color/black"
                     android:textSize="12sp" />
             </LinearLayout>
 
@@ -179,6 +193,8 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:contentDescription="文件详情"
+                    app:tint="@color/black"
+
                     android:src="@drawable/ic_file_detail" />
 
                 <TextView
@@ -186,6 +202,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="文件详情"
+                    android:textColor="@color/black"
                     android:textSize="12sp" />
             </LinearLayout>
         </LinearLayout>

@@ -5,12 +5,11 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.animation.Animation
 import android.view.animation.AnimationUtils
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.computer.skyvault.MainActivity
 import com.computer.skyvault.R
 import com.computer.skyvault.adapter.RecycleItemMyFilesFileFolderListAdapter
 import com.computer.skyvault.common.dto.LoadFileListRequest
@@ -28,10 +27,10 @@ class MyFilesFragment : Fragment() {
     private var _binding: ModuleFragmentMyFilesBinding? = null
     private val binding get() = _binding!!
     private lateinit var adapter: RecycleItemMyFilesFileFolderListAdapter
-
-    // todo 后期需要转移到loginview中
     private lateinit var userViewModel: UserViewModel
 
+    // 跟踪底部操作栏可见性状态
+    private var isBottomActionBarVisible = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -39,204 +38,271 @@ class MyFilesFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = ModuleFragmentMyFilesBinding.inflate(inflater, container, false)
-        val root: View = binding.root
+        return binding.root
+    }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         // 初始化 ViewModel
         userViewModel = ViewModelProvider(this)[UserViewModel::class.java]
 
         // 初始化适配器
         adapter = RecycleItemMyFilesFileFolderListAdapter(
-            onItemClick = { fileItem ->
+            onItemClick = {
                 // 处理点击事件
-                println("Clicked on: ${fileItem.fileName}")
+                Log.d(TAG, "Clicked on: ${it.fileName}")
+                // 在选择状态下，点击切换选中状态
+                if (adapter.isInSelectionMode()) {
+                    adapter.toggleSelection(it.fileId)
+                } else {
+                    // 普通状态下，点击打开文件
+                    Log.d(TAG, "Opening file: ${it.fileName}")
+                    "Opening: ${it.fileName}".showToast(requireContext())
+                }
             },
-            onItemLongClick = { fileItem ->
+            onItemLongClick = {
+                Log.d(TAG, "Long clicked on: ${it.fileName}")
                 // 处理长按事件
-                println("Long clicked on: ${fileItem.fileName}")
+                if (!adapter.isInSelectionMode()) {
+                    adapter.enterSelectionMode()
+                    adapter.toggleSelection(it.fileId)
+                }
             }
         )
 
-        // 设置 RecyclerView
+        // 设置 recycleView
         binding.fileFolderList.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = this@MyFilesFragment.adapter
         }
 
+        // 设置底部操作栏点击事件
+        setupBottomActionBarListeners()
+
         // 监听选择状态变化
         adapter.onSelectionModeChanged = { isInSelectionMode, selectedCount ->
             if (isInSelectionMode) {
+                showTopSelectionBar(selectedCount)
                 showBottomActionBar()
-//                updateTopSelectionBar(selectedCount)
             } else {
+                hideTopSelectionBar()
                 hideBottomActionBar()
-//                hideTopSelectionBar()
             }
         }
-        // 添加测试数据
-        addTestData()
 
-        return root
+        // todo 等登录页面写好后转移，登录用户，同步login viewmodel数据
+        performLogin()
+
+        // 监听登录信息变化, 并获取文件列
+        userViewModel.loginInfo.observe(viewLifecycleOwner) { loginInfo ->
+            loginInfo?.let {
+                // 获取文件列表
+                val request = LoadFileListRequest(
+                    pageNo = 1,
+                    pageSize = 15,
+                    fileNameFuzzy = "",
+                    category = "all",
+                    filePid = "0"
+                )
+
+                loadFileList(request, loginInfo.access_token)
+            } ?: run {
+                // todo 如果没有登录信息
+//                Log.w(TAG, "No login info available, attempting to login...")
+//                performLogin()
+            }
+        }
     }
 
-//    private fun showBottomActionBar() {
-//        binding.bottomActionBar.root.visibility = View.VISIBLE
-//        val slideUp = AnimationUtils.loadAnimation(requireContext(), R.anim.slide_up)
-//        binding.bottomActionBar.root.startAnimation(slideUp)
-//
-//        // 调整 RecyclerView 的底部边距
-//        val params = binding.fileFolderList.layoutParams as ConstraintLayout.LayoutParams
-//        params.bottomMargin = resources.getDimensionPixelSize(R.dimen.bottom_action_bar_height)
-//        binding.fileFolderList.layoutParams = params
-//
-//        // 设置按钮点击事件
-//        binding.bottomActionBar.btnDelete.setOnClickListener {
-//            deleteSelectedFiles()
-//        }
-//        binding.bottomActionBar.btnShare.setOnClickListener {
-//            shareSelectedFiles()
-//        }
-//        binding.bottomActionBar.btnMove.setOnClickListener {
-//            moveSelectedFiles()
-//        }
-//    }
+    private fun loadFileList(req: LoadFileListRequest, token: String) {
+        FileInfoService.loadFileList(
+            req,
+            addHeaders = {
+                it.addHeader("Authorization", "Bearer $token")
+            },
+            onSuccess = { result ->
+                if (result.code == 200) {
+                    result.data?.list?.let { fileList ->
+                        adapter.submitList(fileList)
+                        Log.d(TAG, "Loaded ${fileList.size} files")
+                    }
+                } else {
+                    result.message.showToast(requireContext())
+                    Log.w(TAG, "Load file list failed with code: ${result.code}")
+                }
+            },
+            onFailure = { error ->
+                "Server error. Please try again.".showToast(requireContext())
+                Log.e(TAG, "Load file list error: $error")
+            }
+        )
+    }
 
-    //    private fun hideBottomActionBar() {
-//        val slideDown = AnimationUtils.loadAnimation(requireContext(), R.anim.slide_down)
-//        slideDown.setAnimationListener(object : Animation.AnimationListener {
-//            override fun onAnimationStart(animation: Animation?) {}
-//            override fun onAnimationRepeat(animation: Animation?) {}
-//
-//            override fun onAnimationEnd(animation: Animation?) {
-//                binding.bottomActionBar.root.visibility = View.GONE
-//
-//                // 恢复 RecyclerView 的底部边距
-//                val params = binding.fileFolderList.layoutParams as ConstraintLayout.LayoutParams
-//                params.bottomMargin = 0
-//                binding.fileFolderList.layoutParams = params
-//            }
-//        })
-//        binding.bottomActionBar.root.startAnimation(slideDown)
-//    }
-
-    private fun showBottomActionBar() {
-        // ✅ 仅当当前不可见时才执行动画和显示
-        if (binding.bottomActionBar.root.visibility == View.GONE) {
-            binding.bottomActionBar.root.visibility = View.VISIBLE
-            val slideUp = AnimationUtils.loadAnimation(requireContext(), R.anim.slide_up)
-            binding.bottomActionBar.root.startAnimation(slideUp)
-
-            // 调整 RecyclerView 的底部边距
-//            val params = binding.fileFolderList.layoutParams as ConstraintLayout.LayoutParams
-//            params.bottomMargin = resources.getDimensionPixelSize(R.dimen.bottom_action_bar_height)
-//            binding.fileFolderList.layoutParams = params
-        }
-
-        // 设置按钮点击事件（每次都要设，避免复用旧监听器）
+    private fun setupBottomActionBarListeners() {
         binding.bottomActionBar.btnDelete.setOnClickListener { deleteSelectedFiles() }
         binding.bottomActionBar.btnShare.setOnClickListener { shareSelectedFiles() }
         binding.bottomActionBar.btnMove.setOnClickListener { moveSelectedFiles() }
+        binding.bottomActionBar.btnDownload.setOnClickListener { downloadSelectedFiles() }
+        binding.bottomActionBar.btnFavorite.setOnClickListener { favoriteSelectedFiles() }
+        binding.bottomActionBar.btnRename.setOnClickListener { renameSelectedFiles() }
+        binding.bottomActionBar.btnFileDetails.setOnClickListener { showFileDetails() }
+    }
+
+    private fun performLogin() {
+        val loginRequest = LoginRequest(
+            email = "example@example.com",
+            password = "123123123",
+            verificationCode = "test"
+        )
+        AccountService.login(
+            loginRequest,
+            onSuccess = { result ->
+                if (result.code == 200) {
+                    result.data?.let { loginInfo ->
+                        userViewModel.setLoginInfo(loginInfo)
+                        Log.d(TAG, "Login successful")
+                    }
+                } else {
+                    result.message.showToast(requireContext())
+                }
+            },
+            onFailure = {
+                "Network error. Please try again.".showToast(requireContext())
+                Log.e(TAG, "Login exception: $it")
+            }
+        )
+    }
+
+
+    private fun showTopSelectionBar(selectedCount: Int) {
+        (requireActivity() as? MainActivity)?.showTopSelectionBar(selectedCount)
+    }
+
+    private fun hideTopSelectionBar() {
+        (requireActivity() as? MainActivity)?.hideTopSelectionBar()
+    }
+
+    private fun showBottomActionBar() {
+        if (isBottomActionBarVisible) return
+
+        isBottomActionBarVisible = true
+        binding.bottomActionBar.root.visibility = View.VISIBLE
+        val slideUp = AnimationUtils.loadAnimation(requireContext(), R.anim.slide_up)
+        binding.bottomActionBar.root.startAnimation(slideUp)
+
     }
 
     private fun hideBottomActionBar() {
-        // ✅ 仅当当前可见时才执行动画和隐藏
-        if (binding.bottomActionBar.root.visibility == View.VISIBLE) {
-            val slideDown = AnimationUtils.loadAnimation(requireContext(), R.anim.slide_down)
-            slideDown.setAnimationListener(object : Animation.AnimationListener {
-                override fun onAnimationStart(animation: Animation?) {}
-                override fun onAnimationRepeat(animation: Animation?) {}
+        if (!isBottomActionBarVisible) return
 
-                override fun onAnimationEnd(animation: Animation?) {
-                    binding.bottomActionBar.root.visibility = View.GONE
+        val slideDown = AnimationUtils.loadAnimation(requireContext(), R.anim.slide_down)
+        slideDown.setAnimationListener(object : android.view.animation.Animation.AnimationListener {
+            override fun onAnimationStart(animation: android.view.animation.Animation?) {}
+            override fun onAnimationRepeat(animation: android.view.animation.Animation?) {}
 
-                    // 恢复 RecyclerView 的底部边距
-                    val params = binding.fileFolderList.layoutParams as ConstraintLayout.LayoutParams
-                    params.bottomMargin = 0
-                    binding.fileFolderList.layoutParams = params
-                }
-            })
-            binding.bottomActionBar.root.startAnimation(slideDown)
+            override fun onAnimationEnd(animation: android.view.animation.Animation?) {
+                binding.bottomActionBar.root.visibility = View.GONE
+                isBottomActionBarVisible = false
+            }
+        })
+        binding.bottomActionBar.root.startAnimation(slideDown)
+    }
+
+    private fun downloadSelectedFiles() {
+        val selectedItems = adapter.getSelectedItems()
+        if (selectedItems.isNotEmpty()) {
+            "Downloading ${selectedItems.size} files".showToast(requireContext())
+            Log.d(TAG, "Downloading files: ${selectedItems.map { it.fileName }}")
+        } else {
+            "Please select files first".showToast(requireContext())
+        }
+    }
+
+    private fun shareSelectedFiles() {
+        val selectedItems = adapter.getSelectedItems()
+        if (selectedItems.isNotEmpty()) {
+            "Sharing ${selectedItems.size} files".showToast(requireContext())
+            Log.d(TAG, "Sharing files: ${selectedItems.map { it.fileName }}")
+        } else {
+            "Please select files first".showToast(requireContext())
         }
     }
 
     private fun deleteSelectedFiles() {
         val selectedItems = adapter.getSelectedItems()
-        // 执行删除逻辑
-        println("Deleting files: ${selectedItems.map { it.fileName }}")
+        if (selectedItems.isNotEmpty()) {
+            showDeleteConfirmationDialog(selectedItems)
+        } else {
+            "Please select files first".showToast(requireContext())
+        }
     }
 
-    private fun shareSelectedFiles() {
+    private fun favoriteSelectedFiles() {
         val selectedItems = adapter.getSelectedItems()
-        // 执行分享逻辑
-        println("Sharing files: ${selectedItems.map { it.fileName }}")
+        if (selectedItems.isNotEmpty()) {
+            "Adding ${selectedItems.size} files to favorites".showToast(requireContext())
+            Log.d(TAG, "Favoriting files: ${selectedItems.map { it.fileName }}")
+        } else {
+            "Please select files first".showToast(requireContext())
+        }
+    }
+
+    private fun renameSelectedFiles() {
+        val selectedItems = adapter.getSelectedItems()
+        if (selectedItems.isNotEmpty()) {
+            if (selectedItems.size == 1) {
+                "Renaming file: ${selectedItems[0].fileName}".showToast(requireContext())
+            } else {
+                "Renaming ${selectedItems.size} files".showToast(requireContext())
+            }
+        } else {
+            "Please select files first".showToast(requireContext())
+        }
     }
 
     private fun moveSelectedFiles() {
         val selectedItems = adapter.getSelectedItems()
-        // 执行移动逻辑
-        println("Moving files: ${selectedItems.map { it.fileName }}")
-    }
-
-    private fun addTestData() {
-        val email = "example@example.com"
-        val password = "123123123"
-        val verificationCode = "test"
-
-        AccountService.login(
-            LoginRequest(email, password, verificationCode),
-            onSuccess = { result ->
-                // 处理登录成功逻辑
-                Log.d(TAG, "addTestData: Login success -> $result")
-                if (result.code == 200) {
-                    result.data?.let {
-                        userViewModel.setLoginInfo(it)
-                    }
-                }
-            },
-            onFailure = { error ->
-                // 处理登录失败逻辑
-                "Login failed. Incorrect username or password.".showToast(requireContext())
-                Log.w(TAG, "addTestData: Login Fail -> $error")
-            }
-        )
-
-        userViewModel.loginInfo.observe(viewLifecycleOwner) { loginInfo ->
-            loginInfo?.let {
-                val pageNo = 1
-                val pageSize = 15
-                val fileNameFuzzy = ""
-                val category = "all"
-                val filePid = "0"
-
-                FileInfoService.loadFileList(
-                    LoadFileListRequest(
-                        pageNo,
-                        pageSize,
-                        fileNameFuzzy,
-                        category,
-                        filePid
-                    ),
-                    addHeaders = {
-                        it.addHeader("Authorization", "Bearer ${userViewModel.loginInfo.value?.access_token}")
-                    },
-                    onSuccess = { result ->
-                        // 处理登录成功逻辑
-                        Log.d(TAG, "addTestData: success -> $result")
-                        if (result.code == 200) {
-                            result.data?.list?.let {
-                                adapter.submitList(it)
-                            }
-                        }
-                    },
-                    onFailure = { error ->
-                        // 处理登录失败逻辑
-                        "Server Error".showToast(requireContext())
-                        Log.w(TAG, "addTestData: Server Error -> $error")
-
-                    }
-                )
-            }
+        if (selectedItems.isNotEmpty()) {
+            "Moving ${selectedItems.size} files".showToast(requireContext())
+            Log.d(TAG, "Moving files: ${selectedItems.map { it.fileName }}")
+        } else {
+            "Please select files first".showToast(requireContext())
         }
     }
+
+    private fun showFileDetails() {
+        val selectedItems = adapter.getSelectedItems()
+        if (selectedItems.isNotEmpty()) {
+            if (selectedItems.size == 1) {
+                "Showing details for: ${selectedItems[0].fileName}".showToast(requireContext())
+            } else {
+                "Showing details for ${selectedItems.size} files".showToast(requireContext())
+            }
+        } else {
+            "Please select files first".showToast(requireContext())
+        }
+    }
+
+    private fun showDeleteConfirmationDialog(selectedItems: List<com.computer.skyvault.common.recycleitem.FileItem>) {
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle("Confirm Delete")
+            .setMessage("Are you sure you want to delete ${selectedItems.size} file(s)? This action cannot be undone.")
+            .setPositiveButton("Delete") { _, _ ->
+                // 执行删除操作
+                Log.d(TAG, "Deleting files: ${selectedItems.map { it.fileName }}")
+                "Deleting ${selectedItems.size} files...".showToast(requireContext())
+                // 这里可以调用删除API
+                adapter.exitSelectionMode()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    fun exitSelectionMode() = adapter.exitSelectionMode()
+
+    fun checkAll(isCheckAll: Boolean) = adapter.checkAll(isCheckAll)
+
+    fun isInSelectionMode() = adapter.isInSelectionMode()
 
     override fun onDestroyView() {
         super.onDestroyView()

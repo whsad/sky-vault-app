@@ -3,25 +3,19 @@ package com.computer.skyvault.adapter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.widget.AppCompatImageView
 import androidx.recyclerview.widget.RecyclerView
 import com.computer.skyvault.R
 import com.computer.skyvault.common.enums.FileTypeEnum
 import com.computer.skyvault.common.recycleitem.FileItem
 import com.computer.skyvault.databinding.ModuleRecycleItemMyFilesFileFolderListBinding
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import com.computer.skyvault.utils.DateUtils
+
+private const val TAG = "RecycleItemMyFilesFileF"
 
 class RecycleItemMyFilesFileFolderListAdapter(
     private val onItemClick: (FileItem) -> Unit,
     private val onItemLongClick: (FileItem) -> Unit
 ) : RecyclerView.Adapter<RecycleItemMyFilesFileFolderListAdapter.ViewHolder>() {
-
-    companion object {
-        private val INPUT_DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-        private val OUTPUT_DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-    }
 
     private var items: List<FileItem> = emptyList()
     private var isSelectionMode = false
@@ -32,75 +26,70 @@ class RecycleItemMyFilesFileFolderListAdapter(
     var onSelectionModeChanged: ((Boolean, Int) -> Unit)? = null
 
     inner class ViewHolder(binding: ModuleRecycleItemMyFilesFileFolderListBinding) : RecyclerView.ViewHolder(binding.root) {
-        val ivFileCover = binding.ivFileCover
-        val tvFileName = binding.tvFileName
-        val ivStarred = binding.ivStarred
-        val tvUploadTime = binding.tvUploadTime
-        val tvFileSize = binding.tvFileSize
-        val ibOperate = binding.ibOperate
-        val rootLayout = binding.rootLayout
-
-        // 保存当前绑定的itemId
-        private var currentItemId: String? = null
+        val rootLayout = binding.rootLayout // item layout
+        val ivFileCover = binding.ivFileCover // 文件封面
+        val tvFileName = binding.tvFileName // 文件名称
+        val ivStarred = binding.ivStarred // 收藏图标
+        val tvUpdateTime = binding.tvUpdateTime  // 上传时间
+        val tvFileSize = binding.tvFileSize // 文件大小
+        val ibOperate = binding.ibOperate // 文件操作
 
         init {
-            // 初始化时设置为默认图标（空心圆）
-            ibOperate.setImageResource(R.drawable.ic_pointer)
-            ibOperate.visibility = View.VISIBLE
-
-            // 设置图标点击事件
+            // 设置操作图标点击事件
             ibOperate.setOnClickListener {
                 val position = bindingAdapterPosition
+
                 if (position != RecyclerView.NO_POSITION) {
-                    val item = items.getOrNull(position) ?: return@setOnClickListener
-                    handleIconClick(item)
+                    val item = items[position]
+                    val fileId = item.fileId
+                    if (!isSelectionMode) {
+                        // 如果不在 selection mode, enter selection mode 并选中当前项
+                        enterSelectionMode()
+                        selectedItems.add(fileId)
+                        notifySelectionChanged()
+                        // 更新操作图标
+                        ibOperate.setImageResource(R.drawable.ic_checked)
+                    } else {
+                        // 自动切换选中状态
+                        toggleSelection(fileId)
+                    }
                 }
             }
         }
 
         fun bindItem(item: FileItem) {
-            currentItemId = item.fileId
-
-            // 设置文本
-            tvFileName.text = item.fileName ?: "未知文件"
-            tvFileSize.text = item.fileSize?.toString() ?: "未知大小"
-            ivStarred.visibility = if (item.isStarred) View.VISIBLE else View.GONE
-
-            // 设置上传时间
-            tvUploadTime.text = formatUploadTime(item.lastUpdateTime)
-
             // 设置文件图标
-            setFileIcon(ivFileCover, item.fileType)
-
-            // 更新操作按钮图标
-            updateOperationIcon(item)
-        }
-
-        private fun updateOperationIcon(item: FileItem) {
-            val iconRes = if (isSelectionMode && item.fileId?.let { selectedItems.contains(it) } == true) {
+            val iconRes = when (item.fileType) {
+                FileTypeEnum.IMAGE.typeCode -> R.drawable.image1
+                FileTypeEnum.VIDEO.typeCode -> R.drawable.ic_video_file
+                FileTypeEnum.AUDIO.typeCode -> R.drawable.ic_file_type_audio
+                FileTypeEnum.PDF.typeCode -> R.drawable.ic_file_type_pdf
+                FileTypeEnum.WORD.typeCode -> R.drawable.ic_file_type_word
+                FileTypeEnum.EXCEL.typeCode -> R.drawable.ic_file_type_excel
+                FileTypeEnum.TXT.typeCode -> R.drawable.ic_file_type_txt
+                FileTypeEnum.CODE.typeCode -> R.drawable.ic_file_type_code
+                FileTypeEnum.ZIP.typeCode -> R.drawable.ic_file_type_zip
+                FileTypeEnum.APP.typeCode -> R.drawable.ic_file_type_app
+                FileTypeEnum.BT_SEEDS.typeCode -> R.drawable.ic_file_type_bt
+                FileTypeEnum.OTHERS.typeCode -> R.drawable.ic_file_type_other
+                else -> R.drawable.ic_file_type_folder
+            }
+            ivFileCover.setImageResource(iconRes)
+            // 设置文件名称
+            tvFileName.text = item.fileName
+            // 设置是否收藏
+            ivStarred.visibility = if (item.isStarred) View.VISIBLE else View.GONE
+            // 设置修改时间
+            tvUpdateTime.text = DateUtils.formatIsoDateTime(item.lastUpdateTime)
+            // 设置文件大小
+            tvFileSize.text = if (iconRes == R.drawable.ic_file_type_folder) "" else item.fileSize.toString()
+            // 动态更新操作图标
+            val ibOperateIcon = if (isSelectionMode && item.fileId.let { selectedItems.contains(it) } == true) {
                 R.drawable.ic_checked  // 选中时的对勾图标
             } else {
                 R.drawable.ic_pointer   // 未选中时的空心圆图标
             }
-            ibOperate.setImageResource(iconRes)
-        }
-
-        private fun handleIconClick(item: FileItem) {
-            if (!isSelectionMode) {
-                // 如果不在选择模式，进入选择模式并选中当前项
-                enterSelectionMode()
-                item.fileId?.let { fileId ->
-                    selectedItems.add(fileId)
-                    notifySelectionChanged()
-                    // 更新当前项的图标
-                    ibOperate.setImageResource(R.drawable.ic_checked)
-                }
-            } else {
-                // 已经在选择模式，切换选中状态
-                item.fileId?.let { fileId ->
-                    toggleSelection(fileId)
-                }
-            }
+            ibOperate.setImageResource(ibOperateIcon)
         }
     }
 
@@ -112,18 +101,17 @@ class RecycleItemMyFilesFileFolderListAdapter(
         )
         val holder = ViewHolder(binding)
 
-        // 设置整个item的点击事件监听器
+        // 设置 item layout 点击事件监听
         holder.rootLayout.setOnClickListener {
             val position = holder.bindingAdapterPosition
             if (position != RecyclerView.NO_POSITION) {
-                val item = items.getOrNull(position) ?: return@setOnClickListener
+                val item = items[position]
                 if (isSelectionMode) {
                     // 选择模式下，点击切换选中状态
-                    item.fileId?.let { fileId ->
-                        toggleSelection(fileId)
-                    }
+                    toggleSelection(item.fileId)
                 } else {
-                    // 普通模式下，点击打开文件/文件夹
+                    // 普通状态下，点击打开文件/文件夹
+                    // todo 回调函数
                     onItemClick(item)
                 }
             }
@@ -132,69 +120,35 @@ class RecycleItemMyFilesFileFolderListAdapter(
         holder.rootLayout.setOnLongClickListener {
             val position = holder.bindingAdapterPosition
             if (position != RecyclerView.NO_POSITION) {
-                val item = items.getOrNull(position) ?: return@setOnLongClickListener false
+                val item = items[position]
                 if (!isSelectionMode) {
-                    // 进入选择模式
+                    // 进入选择状态
                     enterSelectionMode()
                     // 选中当前项
-                    item.fileId?.let { fileId ->
-                        selectedItems.add(fileId)
-                        notifySelectionChanged()
-                    }
+                    selectedItems.add(item.fileId)
+                    notifySelectionChanged()
+                    // todo 回调函数
                     onItemLongClick(item)
                     return@setOnLongClickListener true
                 } else {
-                    // 已经在选择模式下，长按切换选中状态
-                    item.fileId?.let { fileId ->
-                        toggleSelection(fileId)
-                    }
+                    // 已经在选择状态下，长按切换选中状态
+                    toggleSelection(item.fileId)
                     return@setOnLongClickListener true
                 }
             }
             false
         }
-
         return holder
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val item = items.getOrNull(position) ?: return
+        val item = items[position]
         holder.bindItem(item)
     }
 
     override fun getItemCount(): Int = items.size
 
-    private fun formatUploadTime(timeString: String?): String {
-        return try {
-            timeString?.let {
-                val date = INPUT_DATE_FORMAT.parse(it)
-                OUTPUT_DATE_FORMAT.format(date)
-            } ?: "未知时间"
-        } catch (e: Exception) {
-            "未知时间"
-        }
-    }
-
-    private fun setFileIcon(imageView: AppCompatImageView, fileType: Int?) {
-        val iconRes = when (fileType) {
-            FileTypeEnum.IMAGE.typeCode -> R.drawable.image1
-            FileTypeEnum.VIDEO.typeCode -> R.drawable.ic_video_file
-            FileTypeEnum.AUDIO.typeCode -> R.drawable.ic_file_type_audio
-            FileTypeEnum.PDF.typeCode -> R.drawable.ic_file_type_pdf
-            FileTypeEnum.WORD.typeCode -> R.drawable.ic_file_type_word
-            FileTypeEnum.EXCEL.typeCode -> R.drawable.ic_file_type_excel
-            FileTypeEnum.TXT.typeCode -> R.drawable.ic_file_type_txt
-            FileTypeEnum.CODE.typeCode -> R.drawable.ic_file_type_code
-            FileTypeEnum.ZIP.typeCode -> R.drawable.ic_file_type_zip
-            FileTypeEnum.APP.typeCode -> R.drawable.ic_file_type_app
-            FileTypeEnum.BT_SEEDS.typeCode -> R.drawable.ic_file_type_bt
-            FileTypeEnum.OTHERS.typeCode -> R.drawable.ic_file_type_other
-            else -> R.drawable.ic_file_type_folder  // 文件夹图标
-        }
-        imageView.setImageResource(iconRes)
-    }
-
-    private fun toggleSelection(fileId: String) {
+    fun toggleSelection(fileId: String) {
         if (selectedItems.contains(fileId)) {
             selectedItems.remove(fileId)
         } else {
@@ -216,55 +170,6 @@ class RecycleItemMyFilesFileFolderListAdapter(
         }
     }
 
-    fun enterSelectionMode() {
-        if (!isSelectionMode) {
-            isSelectionMode = true
-            onSelectionModeChanged?.invoke(true, selectedItems.size)
-            notifyDataSetChanged() // 通知所有项更新图标
-        }
-    }
-
-    fun exitSelectionMode() {
-        if (isSelectionMode) {
-            isSelectionMode = false
-            selectedItems.clear()
-            onSelectionModeChanged?.invoke(false, 0)
-            notifyDataSetChanged() // 通知所有项更新图标
-        }
-    }
-
-    fun isInSelectionMode() = isSelectionMode
-
-    fun getSelectedItems(): List<FileItem> {
-        return items.filter { it.fileId != null && selectedItems.contains(it.fileId) }
-    }
-
-    fun getSelectedCount() = selectedItems.size
-
-    fun selectAll() {
-        if (!isSelectionMode) {
-            enterSelectionMode()
-        }
-        selectedItems.clear()
-        items.forEach { item ->
-            if (item.isSelectable) {
-                item.fileId?.let { fileId ->
-                    selectedItems.add(fileId)
-                }
-            }
-        }
-        notifySelectionChanged()
-        notifyDataSetChanged()
-    }
-
-    fun clearSelection() {
-        selectedItems.clear()
-        notifySelectionChanged()
-        if (isSelectionMode) {
-            exitSelectionMode()
-        }
-    }
-
     private fun notifySelectionChanged() {
         val selectedCount = selectedItems.size
         val selectedItemsList = getSelectedItems()
@@ -272,14 +177,42 @@ class RecycleItemMyFilesFileFolderListAdapter(
         onSelectionModeChanged?.invoke(isSelectionMode, selectedCount)
     }
 
-    fun submitList(newItems: List<FileItem>) {
-        items = newItems
-        notifyDataSetChanged()
+    fun enterSelectionMode() {
+        isSelectionMode = true
+        onSelectionModeChanged?.invoke(true, selectedItems.size)
+        notifyItemRangeChanged(0, itemCount)
     }
 
-    // 为外部提供更新选中数量的方法
-    fun updateSelectedCountDisplay() {
-        val selectedCount = selectedItems.size
-        onSelectionModeChanged?.invoke(isSelectionMode, selectedCount)
+    fun exitSelectionMode() {
+        if (isSelectionMode) {
+            isSelectionMode = false
+            selectedItems.clear()
+            onSelectionModeChanged?.invoke(false, 0)
+            notifyItemRangeChanged(0, itemCount)
+        }
+    }
+
+    fun checkAll(isCheckAll: Boolean) {
+        if (isCheckAll) {
+            // 如果已经是全选状态了，就要取消全选
+            selectedItems.clear()
+        } else {
+            // 如果不是全选状态，就全选所有文件
+            selectedItems.clear()
+            selectedItems.addAll(items.map { it.fileId })
+        }
+        notifySelectionChanged()
+        notifyItemRangeChanged(0, itemCount)
+    }
+
+    fun isInSelectionMode() = isSelectionMode
+
+    fun getSelectedItems(): List<FileItem> = items.filter { selectedItems.contains(it.fileId) }
+
+    fun getSelectedCount() = selectedItems.size
+
+    fun submitList(newItems: List<FileItem>) {
+        items = newItems
+        notifyItemRangeChanged(0, itemCount)
     }
 }

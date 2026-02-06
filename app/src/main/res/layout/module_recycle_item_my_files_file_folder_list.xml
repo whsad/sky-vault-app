@@ -10,13 +10,6 @@
     android:orientation="horizontal"
     android:padding="12dp">
 
-<!--    <CheckBox-->
-<!--        android:id="@+id/enabled_selected"-->
-<!--        android:layout_width="24dp"-->
-<!--        android:layout_height="24dp"-->
-<!--        android:layout_marginEnd="12dp"-->
-<!--        android:visibility="gone" />-->
-
     <!-- 类型图标 -->
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/iv_file_cover"
@@ -68,17 +61,11 @@
             android:orientation="horizontal">
 
             <TextView
-                android:id="@+id/tv_upload_time"
+                android:id="@+id/tv_update_time"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="upload time"
-                android:textColor="@color/md_theme_onSurfaceVariant"
-                android:textSize="12sp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="  •  "
+                android:text="update time"
+                android:layout_marginEnd="10dp"
                 android:textColor="@color/md_theme_onSurfaceVariant"
                 android:textSize="12sp" />
 
@@ -101,13 +88,4 @@
         android:contentDescription="More options"
         android:src="@drawable/ic_checked"
         app:tint="@color/md_theme_onSurfaceVariant" />
-
-<!--    <ImageButton-->
-<!--        android:id="@+id/btn_more"-->
-<!--        android:layout_width="24dp"-->
-<!--        android:layout_height="24dp"-->
-<!--        android:background="?attr/selectableItemBackgroundBorderless"-->
-<!--        android:contentDescription="More options"-->
-<!--        android:src="@drawable/ic_more"-->
-<!--        app:tint="@color/md_theme_onSurfaceVariant" />-->
 </LinearLayout>
