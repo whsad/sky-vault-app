@@ -14,6 +14,7 @@ import com.computer.skyvault.R
 import com.computer.skyvault.adapter.RecycleItemMyFilesFileFolderListAdapter
 import com.computer.skyvault.common.dto.LoadFileListRequest
 import com.computer.skyvault.common.dto.LoginRequest
+import com.computer.skyvault.common.dto.NewFolderRequest
 import com.computer.skyvault.databinding.ModuleFragmentMyFilesBinding
 import com.computer.skyvault.service.AccountService
 import com.computer.skyvault.service.FileInfoService
@@ -108,7 +109,11 @@ class MyFilesFragment : Fragment() {
                 loadFileList(request, loginInfo.access_token)
 
                 binding.btnNewFolder.setOnClickListener {
-                    showCreateFolderDialog()
+                    showCreateFolderDialog(loginInfo.access_token)
+                }
+
+                binding.btnUpload.setOnClickListener {
+
                 }
             } ?: run {
                 // todo 如果没有登录信息
@@ -118,7 +123,7 @@ class MyFilesFragment : Fragment() {
         }
     }
 
-    private fun showCreateFolderDialog() {
+    private fun showCreateFolderDialog(token: String) {
         val dialog = androidx.appcompat.app.AlertDialog.Builder(requireContext())
         val inflater = layoutInflater
         val view = inflater.inflate(R.layout.module_dialog_create_folder, null)
@@ -133,8 +138,11 @@ class MyFilesFragment : Fragment() {
                 tilFolderName.error = "文件夹名称不能为空"
                 return@setPositiveButton
             }
+
             // 调用创建文件夹 API
-//            createFolder(folderName)
+            createFolder(NewFolderRequest(
+                "0", folderName
+            ), token)
         }
 
         dialog.setNegativeButton("返回") { dialog, _ ->
@@ -142,16 +150,35 @@ class MyFilesFragment : Fragment() {
         }
 
         val alertDialog = dialog.create()
-        // 设置对话框宽度为 80% 屏幕宽（更符合截图样式）
-        alertDialog.window?.setLayout(
-            (resources.displayMetrics.widthPixels * 0.8).toInt(),
-            ViewGroup.LayoutParams.WRAP_CONTENT
+        // 设置圆角
+        alertDialog.window?.setBackgroundDrawable(
+            android.graphics.drawable.GradientDrawable().apply {
+                cornerRadius = 16f * requireContext().resources.displayMetrics.density
+                setColor(android.graphics.Color.WHITE)
+            }
         )
         alertDialog.show()
     }
 
-    private fun createFolder(req: LoadFileListRequest, token: String) {
-
+    private fun createFolder(req: NewFolderRequest, token: String) {
+        "filePid: ${req.filePid}, folderName: ${req.folderName}".showToast(requireContext())
+        FileInfoService.newFolder(
+            req,
+            addHeaders = { it.addHeader("Authorization", "Bearer $token") },
+            onSuccess = { result ->
+                if (result.code == 200) {
+                    "文件夹 '${req.folderName}' 创建成功".showToast(requireContext())
+                    // 刷新列表（可选）
+                    loadFileList(LoadFileListRequest(1, 15, "", "all", "0"), token)
+                } else {
+                    result.message.showToast(requireContext())
+                }
+            },
+            onFailure = { error ->
+                "创建失败: $error".showToast(requireContext())
+                Log.e(TAG, "Create folder failed: $error")
+            }
+        )
     }
 
     private fun loadFileList(req: LoadFileListRequest, token: String) {

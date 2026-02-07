@@ -38,7 +38,7 @@ data class NewFolderRequest(
     @field:Size(min = 1, max = 20)
     val filePid: String,
     @field:Size(min = 1, max = 255)
-    val fileName: String
+    val folderName: String
 )
 
 // 获取文件夹信息请求
