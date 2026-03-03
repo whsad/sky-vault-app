@@ -1,5 +1,6 @@
 package com.computer.skyvault.ui.myfiles
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -7,19 +8,19 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AnimationUtils
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.computer.skyvault.MainActivity
 import com.computer.skyvault.R
 import com.computer.skyvault.adapter.RecycleItemMyFilesFileFolderListAdapter
 import com.computer.skyvault.common.dto.LoadFileListRequest
-import com.computer.skyvault.common.dto.LoginRequest
 import com.computer.skyvault.common.dto.NewFolderRequest
 import com.computer.skyvault.databinding.ModuleFragmentMyFilesBinding
-import com.computer.skyvault.service.AccountService
+import com.computer.skyvault.manager.LoginManager
 import com.computer.skyvault.service.FileInfoService
-import com.computer.skyvault.ui.login.UserViewModel
+import com.computer.skyvault.ui.login.LoginActivity
 import com.computer.skyvault.utils.showToast
+import kotlinx.coroutines.launch
 
 private const val TAG = "MyFilesFragment"
 
@@ -28,7 +29,7 @@ class MyFilesFragment : Fragment() {
     private var _binding: ModuleFragmentMyFilesBinding? = null
     private val binding get() = _binding!!
     private lateinit var adapter: RecycleItemMyFilesFileFolderListAdapter
-    private lateinit var userViewModel: UserViewModel
+    private lateinit var loginManager: LoginManager
 
     // 跟踪底部操作栏可见性状态
     private var isBottomActionBarVisible = false
@@ -44,8 +45,9 @@ class MyFilesFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        // 初始化 ViewModel
-        userViewModel = ViewModelProvider(this)[UserViewModel::class.java]
+
+        // 初始化 LoginManager
+        loginManager = LoginManager.getInstance(requireActivity().application)
 
         // 初始化适配器
         adapter = RecycleItemMyFilesFileFolderListAdapter(
@@ -91,35 +93,32 @@ class MyFilesFragment : Fragment() {
             }
         }
 
-        // todo 等登录页面写好后转移，登录用户，同步login viewmodel数据
-        performLogin()
-
-        // 监听登录信息变化, 并获取文件列
-        userViewModel.loginInfo.observe(viewLifecycleOwner) { loginInfo ->
-            loginInfo?.let {
-                // 获取文件列表
-                val request = LoadFileListRequest(
+        // 先检查是否有登录信息
+        val currentLoginInfo = loginManager.getLoginInfo()
+        if (currentLoginInfo != null) {
+            Log.d(TAG, currentLoginInfo.access_token)
+            loadFileList(
+                LoadFileListRequest(
                     pageNo = 1,
                     pageSize = 15,
                     fileNameFuzzy = "",
                     category = "all",
                     filePid = "0"
-                )
+                ),
+                currentLoginInfo.access_token
+            )
 
-                loadFileList(request, loginInfo.access_token)
-
-                binding.btnNewFolder.setOnClickListener {
-                    showCreateFolderDialog(loginInfo.access_token)
-                }
-
-                binding.btnUpload.setOnClickListener {
-
-                }
-            } ?: run {
-                // todo 如果没有登录信息
-//                Log.w(TAG, "No login info available, attempting to login...")
-//                performLogin()
+            binding.btnNewFolder.setOnClickListener {
+                showCreateFolderDialog(currentLoginInfo.access_token)
             }
+            binding.btnUpload.setOnClickListener {
+                // TODO: 实现上传逻辑
+            }
+        } else {
+            // 无登录信息，跳转到登录页
+            "请先登录".showToast(requireContext())
+            startActivity(Intent(requireContext(), LoginActivity::class.java))
+            requireActivity().finish()
         }
     }
 
@@ -140,9 +139,11 @@ class MyFilesFragment : Fragment() {
             }
 
             // 调用创建文件夹 API
-            createFolder(NewFolderRequest(
-                "0", folderName
-            ), token)
+            createFolder(
+                NewFolderRequest(
+                    "0", folderName
+                ), token
+            )
         }
 
         dialog.setNegativeButton("返回") { dialog, _ ->
@@ -195,6 +196,9 @@ class MyFilesFragment : Fragment() {
                     }
                 } else {
                     result.message.showToast(requireContext())
+                    loginManager.clearLoginInfo()
+                    startActivity(Intent(requireContext(), LoginActivity::class.java))
+                    requireActivity().finish()
                     Log.w(TAG, "Load file list failed with code: ${result.code}")
                 }
             },
@@ -215,30 +219,30 @@ class MyFilesFragment : Fragment() {
         binding.bottomActionBar.btnFileDetails.setOnClickListener { showFileDetails() }
     }
 
-    private fun performLogin() {
-        val loginRequest = LoginRequest(
-            email = "example@example.com",
-            password = "123123123",
-            verificationCode = "test"
-        )
-        AccountService.login(
-            loginRequest,
-            onSuccess = { result ->
-                if (result.code == 200) {
-                    result.data?.let { loginInfo ->
-                        userViewModel.setLoginInfo(loginInfo)
-                        Log.d(TAG, "Login successful")
-                    }
-                } else {
-                    result.message.showToast(requireContext())
-                }
-            },
-            onFailure = {
-                "Network error. Please try again.".showToast(requireContext())
-                Log.e(TAG, "Login exception: $it")
-            }
-        )
-    }
+//    private fun performLogin() {
+//        val loginRequest = LoginRequest(
+//            email = "example@example.com",
+//            password = "123123123",
+//            verificationCode = "test"
+//        )
+//        AccountService.login(
+//            loginRequest,
+//            onSuccess = { result ->
+//                if (result.code == 200) {
+//                    result.data?.let { loginInfo ->
+//                        userViewModel.setLoginInfo(loginInfo)
+//                        Log.d(TAG, "Login successful")
+//                    }
+//                } else {
+//                    result.message.showToast(requireContext())
+//                }
+//            },
+//            onFailure = {
+//                "Network error. Please try again.".showToast(requireContext())
+//                Log.e(TAG, "Login exception: $it")
+//            }
+//        )
+//    }
 
 
     private fun showTopSelectionBar(selectedCount: Int) {
@@ -375,6 +379,4 @@ class MyFilesFragment : Fragment() {
         super.onDestroyView()
         _binding = null
     }
-
-
 }

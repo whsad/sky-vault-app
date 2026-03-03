@@ -3,6 +3,7 @@ package com.computer.skyvault.common.vo
 data class UserInfoVo(
     val id: String,
     val nick_name: String,
+    var email: String,
     val is_superuser: Boolean
 )
 

@@ -93,29 +93,6 @@ class RecycleItemMyFilesFileFolderListAdapter(
                     ivFileCover.setImageResource(iconRes)
                 }
             }
-
-  /*          val iconRes = when (item.fileType) {
-                FileTypeEnum.IMAGE.typeCode -> {
-                    getFileCover(ivFileCover, item.fileCover)
-                    R.drawable.ic_file_type_folder // 初始占位图标（避免空白）
-                }
-                FileTypeEnum.VIDEO.typeCode -> {
-                    getFileCover(ivFileCover, item.fileCover)
-                    R.drawable.ic_file_type_folder
-                }
-                FileTypeEnum.AUDIO.typeCode -> R.drawable.ic_file_type_audio
-                FileTypeEnum.PDF.typeCode -> R.drawable.ic_file_type_pdf
-                FileTypeEnum.WORD.typeCode -> R.drawable.ic_file_type_word
-                FileTypeEnum.EXCEL.typeCode -> R.drawable.ic_file_type_excel
-                FileTypeEnum.TXT.typeCode -> R.drawable.ic_file_type_txt
-                FileTypeEnum.CODE.typeCode -> R.drawable.ic_file_type_code
-                FileTypeEnum.ZIP.typeCode -> R.drawable.ic_file_type_zip
-                FileTypeEnum.APP.typeCode -> R.drawable.ic_file_type_app
-                FileTypeEnum.BT_SEEDS.typeCode -> R.drawable.ic_file_type_bt
-                FileTypeEnum.OTHERS.typeCode -> R.drawable.ic_file_type_other
-                else -> R.drawable.ic_file_type_folder
-            }
-            ivFileCover.setImageResource(iconRes)*/
             // 设置文件名称
             tvFileName.text = item.fileName
             // 设置是否收藏
@@ -202,45 +179,6 @@ class RecycleItemMyFilesFileFolderListAdapter(
         onSelectionChanged?.invoke(selectedItemsList)
         onSelectionModeChanged?.invoke(isSelectionMode, selectedCount)
     }
-
-//    // ✅ 修改为可空 fileId，并在内部安全处理
-//    private fun getFileCover(
-//        ivFileCover: AppCompatImageView,
-//        fileCoverPath: String
-//    ) {
-//        FileInfoService.getFileCover(
-//            fileCoverPath,
-//            onSuccess = { bytes ->
-//                // ✅ 使用 ViewHolder 所属 Fragment 的上下文（通过 binding.root.context）
-//                ivFileCover.context?.let { ctx ->
-//                    android.os.Handler(ctx.mainLooper).post {
-//                        ivFileCover.setImageBitmap(BitmapFactory.decodeByteArray(bytes, 0, bytes.size))
-//                    }
-//                } ?: run {
-//                    ivFileCover.setImageResource(R.drawable.ic_file_type_other)
-//                }
-//            },
-//            onFailure = {
-//                ivFileCover.setImageResource(R.drawable.ic_file_type_other)
-//            }
-//        )
-//    }
-
-//    private fun getFileCover(ivFileCover: AppCompatImageView, lastUpdateTime: String?, storageSubdir: String, fileId: String) {
-//
-//        FileInfoService.getFileCover(
-//            GetFileCoverRequest(lastUpdateTime.toString(), storageSubdir, fileId),
-//            onSuccess = { bytes ->
-//                requireActivity().runOnUiThread {
-//                    ivFileCover.setImageBitmap(BitmapFactory.decodeByteArray(bytes, 0, bytes.size))
-//                }
-//            },
-//            onFailure = {
-//                // 失败：回退到默认图标
-//                ivFileCover.setImageResource(R.drawable.ic_file_type_other)
-//            }
-//        )
-//    }
 
     fun toggleSelection(fileId: String) {
         if (selectedItems.contains(fileId)) {

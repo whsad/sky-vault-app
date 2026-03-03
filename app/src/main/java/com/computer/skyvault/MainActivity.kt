@@ -1,5 +1,6 @@
 package com.computer.skyvault
 
+import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
@@ -14,6 +15,7 @@ import androidx.core.view.GravityCompat
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
@@ -24,9 +26,12 @@ import com.computer.skyvault.common.recycleitem.HeaderItem
 import com.computer.skyvault.common.recycleitem.MenuItem
 import com.computer.skyvault.common.recycleitem.NavItem
 import com.computer.skyvault.databinding.ModuleActivityMainBinding
+import com.computer.skyvault.manager.LoginManager
 import com.computer.skyvault.ui.customview.CustomNavigationView
+import com.computer.skyvault.ui.login.LoginActivity
 import com.computer.skyvault.ui.myfiles.MyFilesFragment
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.launch
 
 private const val TAG = "MainActivity"
 
@@ -40,6 +45,7 @@ class MainActivity : AppCompatActivity() {
     private var backPressedTime: Long = 0
     private var isAtHomeDestination = true
     private val homeDestinationId = R.id.nav_my_files
+    private lateinit var loginManager: LoginManager
 
     // 顶部导航栏
     private lateinit var topSelectionBar: View
@@ -51,6 +57,16 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // 初始化 LoginManager
+        loginManager = LoginManager.getInstance(application)
+
+        // 检查登录状态
+        if (!loginManager.isLoggedIn()) {
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+            return
+        }
 
         window.statusBarColor = Color.WHITE
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
@@ -141,12 +157,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initCustomNavigationView() {
-        // 设置头部
-        val header = HeaderItem(
-            nickname = "John Doe",
-            email = "john.doe@example.com"
-        )
-        customNavView.setHeader(header)
+
+        // 从 LoginManager 获取登录信息
+        val loginInfo = loginManager.getLoginInfo()
+        if (loginInfo != null) {
+            // 设置头部信息
+            val header = HeaderItem(
+                nickname = loginInfo.user.nick_name,
+                email = loginInfo.user.email // 或者用其他字段
+            )
+            customNavView.setHeader(header)
+        }
 
         // 设置菜单项
         val menuItems = listOf<NavItem>(

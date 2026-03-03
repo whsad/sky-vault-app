@@ -24,9 +24,6 @@ class RecycleItemCustomNavAdapter(
         private val iconView: AppCompatImageView = binding.icon
         private val titleView: TextView = binding.title
         private val badgeView: TextView = binding.textViewBadge
-//        private val selectedView: View = View(itemView.context).apply {
-//            setBackgroundColor(ContextCompat.getColor(itemView.context, R.color.md_theme_onPrimary))
-//        }
 
         fun bind(menuItem: MenuItem) {
             // 设置图标
@@ -50,7 +47,6 @@ class RecycleItemCustomNavAdapter(
 
             // 设置选中状态
             if (menuItem.isSelected) {
-//                itemLayout.setBackgroundColor(R.color.md_theme_secondaryContainer)
                 itemLayout.setBackgroundResource(R.drawable.nav_item_background)
                 iconView.setColorFilter(
                     ContextCompat.getColor(itemView.context, R.color.md_theme_onSecondaryContainer)
@@ -101,7 +97,6 @@ class RecycleItemCustomNavAdapter(
                     holder.bind(item)
                 }
             }
-            // DividerViewHolder 不需要绑定数据
         }
     }
 

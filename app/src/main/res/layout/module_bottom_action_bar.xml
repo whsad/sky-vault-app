@@ -5,8 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="#ffffff"
-    android:elevation="8dp"
-    android:visibility="gone">
+    android:scrollbars="none"
+    android:visibility="visible">
 
     <!-- 顶部灰色分隔线 -->
     <LinearLayout
@@ -17,8 +17,8 @@
         <!-- 分隔线 -->
         <View
             android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="#e0e0e0" />
+            android:layout_height="2dp"
+            android:background="#f2f2f2" />
 
         <!-- 所有操作按钮的容器 -->
         <LinearLayout
@@ -42,16 +42,15 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:contentDescription="下载"
-                    android:textColor="@color/black"
-                    app:tint="@color/black"
-                    android:src="@drawable/ic_file_download" />
+                    android:src="@drawable/ic_file_download"
+                    app:tint="#030814" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="下载"
-                    android:textColor="@color/black"
+                    android:textColor="#0a0a0c"
                     android:textSize="12sp" />
             </LinearLayout>
 
@@ -69,14 +68,14 @@
                     android:layout_height="24dp"
                     android:contentDescription="分享"
                     android:src="@drawable/ic_menu_shared"
-                    app:tint="@color/black" />
+                    app:tint="#030814" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="分享"
-                    android:textColor="@color/black"
+                    android:textColor="#030814"
                     android:textSize="12sp" />
             </LinearLayout>
 
@@ -93,15 +92,15 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:contentDescription="删除"
-                    app:tint="@color/black"
-                    android:src="@drawable/ic_menu_trash" />
+                    android:src="@drawable/ic_menu_trash"
+                    app:tint="#030814" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="删除"
-                    android:textColor="@color/black"
+                    android:textColor="#0a0a0c"
                     android:textSize="12sp" />
             </LinearLayout>
 
@@ -118,15 +117,15 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:contentDescription="收藏"
-                    app:tint="@color/black"
-                    android:src="@drawable/ic_menu_starred" />
+                    android:src="@drawable/ic_menu_starred"
+                    app:tint="#030814" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="收藏"
-                    android:textColor="@color/black"
+                    android:textColor="#0a0a0c"
                     android:textSize="12sp" />
             </LinearLayout>
 
@@ -143,15 +142,15 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:contentDescription="重命名"
-                    app:tint="@color/black"
-                    android:src="@drawable/ic_file_rename" />
+                    android:src="@drawable/ic_file_rename"
+                    app:tint="#030814" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="重命名"
-                    android:textColor="@color/black"
+                    android:textColor="#0a0a0c"
                     android:textSize="12sp" />
             </LinearLayout>
 
@@ -168,15 +167,15 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:contentDescription="移动"
-                    app:tint="@color/black"
-                    android:src="@drawable/ic_file_move" />
+                    android:src="@drawable/ic_file_move"
+                    app:tint="#030814" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="移动"
-                    android:textColor="@color/black"
+                    android:textColor="#0a0a0c"
                     android:textSize="12sp" />
             </LinearLayout>
 
@@ -193,16 +192,15 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:contentDescription="文件详情"
-                    app:tint="@color/black"
-
-                    android:src="@drawable/ic_file_detail" />
+                    android:src="@drawable/ic_file_detail"
+                    app:tint="#030814" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="文件详情"
-                    android:textColor="@color/black"
+                    android:textColor="#0a0a0c"
                     android:textSize="12sp" />
             </LinearLayout>
         </LinearLayout>

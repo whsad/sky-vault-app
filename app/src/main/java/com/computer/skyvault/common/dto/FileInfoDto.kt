@@ -33,6 +33,16 @@ data class UploadFileRequest(
     val chunkTotal: Int
 )
 
+data class ChunkUploadRequest(
+    val file: okhttp3.MultipartBody.Part,
+    val fileName: String,
+    val filePid: String,
+    val fileMd5: String,
+    val chunkIndex: Int,
+    val chunkTotal: Int,
+    val fileId: String
+)
+
 // 新建文件夹请求
 data class NewFolderRequest(
     @field:Size(min = 1, max = 20)

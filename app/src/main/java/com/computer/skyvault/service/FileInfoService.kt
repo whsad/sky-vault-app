@@ -4,15 +4,26 @@ import com.computer.skyvault.common.dto.LoadFileListRequest
 import com.computer.skyvault.common.dto.NewFolderRequest
 import com.computer.skyvault.common.recycleitem.FileItem
 import com.computer.skyvault.common.vo.PageResponseResult
+import com.computer.skyvault.common.vo.R
 import com.computer.skyvault.utils.ApiClient
 import com.computer.skyvault.utils.DataUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
 import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import java.io.File
+import java.io.RandomAccessFile
+import java.security.MessageDigest
+import kotlin.math.min
 
 private const val TAG = "FileInfoService"
 
 object FileInfoService {
 
     private const val PREFIX = "file"
+    private const val CHUNK_SIZE = 5 * 1024 * 1024 // 5MB per chunk
 
     fun loadFileList(
         req: LoadFileListRequest,
@@ -34,9 +45,118 @@ object FileInfoService {
         )
     }
 
-    fun uploadFile(){
+    suspend fun calculateFileMd5(filePath: String): String = withContext(Dispatchers.IO) {
+        val file = File(filePath)
+        if (!file.exists()) {
+            throw IllegalArgumentException("File does not exist: $filePath")
+        }
 
+        val digest = MessageDigest.getInstance("MD5")
+        file.inputStream().use { inputStream ->
+            val buffer = ByteArray(8192)
+            var bytesRead: Int
+            while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                digest.update(buffer, 0, bytesRead)
+            }
+        }
+
+        digest.digest().joinToString("") { "%02x".format(it) }
     }
+
+    suspend fun uploadFileWithChunks(
+        filePath: String,
+        fileName: String,
+        filePid: String,
+        token: String,
+        onProgress: (uploaded: Long, total: Long) -> Unit
+    ): Result<String> = withContext(Dispatchers.IO) {
+        try {
+            val file = File(filePath)
+            if (!file.exists()) {
+                return@withContext Result.failure(IllegalArgumentException("File does not exist: $filePath"))
+            }
+
+            // 计算文件MD5
+            val fileMd5 = calculateFileMd5(filePath)
+
+            // 计算分片数量
+            val totalSize = file.length()
+            val chunkTotal = ((totalSize + CHUNK_SIZE - 1) / CHUNK_SIZE).toInt()
+            var fileId: String? = null
+
+            // 分片上传
+            for (chunkIndex in 0 until chunkTotal) {
+                val start = chunkIndex * CHUNK_SIZE.toLong()
+                val end = min((chunkIndex + 1) * CHUNK_SIZE.toLong(), totalSize)
+                val chunkSize = (end - start).toInt()
+
+                // 读取分片数据
+                val buffer = ByteArray(chunkSize)
+                RandomAccessFile(file, "r").use { raf ->
+                    raf.seek(start)
+                    raf.readFully(buffer)
+                }
+
+                // 构建Multipart请求
+                val requestBody = MultipartBody.Builder()
+                    .setType(MultipartBody.FORM)
+                    .addFormDataPart(
+                        "file", fileName,
+                        buffer.toRequestBody("application/octet-stream".toMediaTypeOrNull(), 0, chunkSize)
+                    )
+                    .addFormDataPart("fileName", fileName)
+                    .addFormDataPart("filePid", filePid)
+                    .addFormDataPart("fileMd5", fileMd5)
+                    .addFormDataPart("chunkIndex", chunkIndex.toString())
+                    .addFormDataPart("chunkTotal", chunkTotal.toString())
+                    .also { builder ->
+                        fileId?.let { builder.addFormDataPart("fileId", it) }
+                    }
+                    .build()
+
+                val request = Request.Builder()
+                    .url("${ApiClient.BASE_URL}$PREFIX/uploadFile")
+                    .post(requestBody)
+                    .addHeader("Authorization", "Bearer $token")
+                    .build()
+
+                val response = ApiClient.client.newCall(request).execute()
+                if (!response.isSuccessful) {
+                    return@withContext Result.failure(Exception("Upload failed: ${response.code}"))
+                }
+
+                val responseBody = response.body?.string()
+                val result = DataUtil.parseJsonObj<R<Map<String, Any>>>(responseBody.orEmpty())
+
+                if (result?.code != 200) {
+                    return@withContext Result.failure(Exception("Upload failed: ${result?.message}"))
+                }
+
+                // 保存fileId用于后续分片
+                result.data?.get("file_id")?.toString()?.let { fileId = it }
+
+                // 更新进度
+                onProgress(end, totalSize)
+            }
+
+            Result.success("Upload completed successfully")
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+
+    // 简化的上传方法（不显示详细进度）
+    suspend fun uploadFile(
+        filePath: String,
+        fileName: String,
+        filePid: String = "0",
+        token: String
+    ): Result<String> = uploadFileWithChunks(filePath, fileName, filePid, token) { _, _ -> }
+
+//    fun uploadFile() {
+//
+//    }
 
     fun getFileCoverPath(
         fileCoverPath: String
