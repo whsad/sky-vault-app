@@ -45,6 +45,121 @@ object FileInfoService {
         )
     }
 
+    /*    suspend fun calculateFileMd5(filePath: String): String = withContext(Dispatchers.IO) {
+            val file = File(filePath)
+            if (!file.exists()) {
+                throw IllegalArgumentException("File does not exist: $filePath")
+            }
+
+            val digest = MessageDigest.getInstance("MD5")
+            file.inputStream().use { inputStream ->
+                val buffer = ByteArray(8192)
+                var bytesRead: Int
+                while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                    digest.update(buffer, 0, bytesRead)
+                }
+            }
+
+            digest.digest().joinToString("") { "%02x".format(it) }
+        }*/
+
+    /*
+        suspend fun uploadFileWithChunks(
+            filePath: String,
+            fileName: String,
+            filePid: String,
+            token: String,
+            onProgress: (uploaded: Long, total: Long) -> Unit
+        ): Result<String> = withContext(Dispatchers.IO) {
+            try {
+                val file = File(filePath)
+                if (!file.exists()) {
+                    return@withContext Result.failure(IllegalArgumentException("File does not exist: $filePath"))
+                }
+
+                // 计算文件MD5
+                val fileMd5 = calculateFileMd5(filePath)
+
+                // 计算分片数量
+                val totalSize = file.length()
+                val chunkTotal = ((totalSize + CHUNK_SIZE - 1) / CHUNK_SIZE).toInt()
+                var fileId: String? = null
+
+                // 分片上传
+                for (chunkIndex in 0 until chunkTotal) {
+                    val start = chunkIndex * CHUNK_SIZE.toLong()
+                    val end = min((chunkIndex + 1) * CHUNK_SIZE.toLong(), totalSize)
+                    val chunkSize = (end - start).toInt()
+
+                    // 读取分片数据
+                    val buffer = ByteArray(chunkSize)
+                    RandomAccessFile(file, "r").use { raf ->
+                        raf.seek(start)
+                        raf.readFully(buffer)
+                    }
+
+                    // 构建Multipart请求
+                    val requestBody = MultipartBody.Builder()
+                        .setType(MultipartBody.FORM)
+                        .addFormDataPart(
+                            "file", fileName,
+                            buffer.toRequestBody("application/octet-stream".toMediaTypeOrNull(), 0, chunkSize)
+                        )
+                        .addFormDataPart("fileName", fileName)
+                        .addFormDataPart("filePid", filePid)
+                        .addFormDataPart("fileMd5", fileMd5)
+                        .addFormDataPart("chunkIndex", chunkIndex.toString())
+                        .addFormDataPart("chunkTotal", chunkTotal.toString())
+                        .also { builder ->
+                            fileId?.let { builder.addFormDataPart("fileId", it) }
+                        }
+                        .build()
+
+                    val request = Request.Builder()
+                        .url("${ApiClient.BASE_URL}$PREFIX/uploadFile")
+                        .post(requestBody)
+                        .addHeader("Authorization", "Bearer $token")
+                        .build()
+
+                    val response = ApiClient.client.newCall(request).execute()
+                    if (!response.isSuccessful) {
+                        return@withContext Result.failure(Exception("Upload failed: ${response.code}"))
+                    }
+
+                    val responseBody = response.body?.string()
+                    val result = DataUtil.parseJsonObj<R<Map<String, Any>>>(responseBody.orEmpty())
+
+                    if (result?.code != 200) {
+                        return@withContext Result.failure(Exception("Upload failed: ${result?.message}"))
+                    }
+
+                    // 保存fileId用于后续分片
+                    result.data?.get("file_id")?.toString()?.let { fileId = it }
+
+                    // 更新进度
+                    onProgress(end, totalSize)
+                }
+
+                Result.success("Upload completed successfully")
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    */
+
+    /*
+        // 简化的上传方法（不显示详细进度）
+        suspend fun uploadFile(
+            filePath: String,
+            fileName: String,
+            filePid: String = "0",
+            token: String
+        ): Result<String> = uploadFileWithChunks(filePath, fileName, filePid, token) { _, _ -> }
+
+    //    fun uploadFile() {
+    //
+    //    }*/
+
     suspend fun calculateFileMd5(filePath: String): String = withContext(Dispatchers.IO) {
         val file = File(filePath)
         if (!file.exists()) {
@@ -60,7 +175,7 @@ object FileInfoService {
             }
         }
 
-        digest.digest().joinToString("") { "%02x".format(it) }
+        return@withContext digest.digest().joinToString("") { "%02x".format(it) }
     }
 
     suspend fun uploadFileWithChunks(
@@ -76,7 +191,7 @@ object FileInfoService {
                 return@withContext Result.failure(IllegalArgumentException("File does not exist: $filePath"))
             }
 
-            // 计算文件MD5
+            // 计算文件 MD5
             val fileMd5 = calculateFileMd5(filePath)
 
             // 计算分片数量
@@ -97,7 +212,7 @@ object FileInfoService {
                     raf.readFully(buffer)
                 }
 
-                // 构建Multipart请求
+                // 构建 Multipart 请求
                 val requestBody = MultipartBody.Builder()
                     .setType(MultipartBody.FORM)
                     .addFormDataPart(
@@ -132,7 +247,7 @@ object FileInfoService {
                     return@withContext Result.failure(Exception("Upload failed: ${result?.message}"))
                 }
 
-                // 保存fileId用于后续分片
+                // 保存 fileId 用于后续分片
                 result.data?.get("file_id")?.toString()?.let { fileId = it }
 
                 // 更新进度
@@ -145,7 +260,6 @@ object FileInfoService {
         }
     }
 
-
     // 简化的上传方法（不显示详细进度）
     suspend fun uploadFile(
         filePath: String,
@@ -153,10 +267,6 @@ object FileInfoService {
         filePid: String = "0",
         token: String
     ): Result<String> = uploadFileWithChunks(filePath, fileName, filePid, token) { _, _ -> }
-
-//    fun uploadFile() {
-//
-//    }
 
     fun getFileCoverPath(
         fileCoverPath: String

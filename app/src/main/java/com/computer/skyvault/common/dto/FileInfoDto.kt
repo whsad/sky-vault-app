@@ -33,6 +33,15 @@ data class UploadFileRequest(
     val chunkTotal: Int
 )
 
+
+data class SelectedFile(
+    val uri: android.net.Uri,
+    val name: String,
+    val size: Long,
+    val type: String?
+)
+
+
 data class ChunkUploadRequest(
     val file: okhttp3.MultipartBody.Part,
     val fileName: String,
