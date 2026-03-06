@@ -114,10 +114,10 @@ enum class FileTypeEnum(
     val storageDirectory: String get() = storageSubdir
 }
 
-enum class UploadStatusEnum(val status: String) {
-    INSTANT_UPLOAD("Instant upload"),
-    UPLOADING("Uploading"),
-    UPLOAD_FINISH("Upload finish")
+enum class UploadStatusEnum(val status: Int) {
+    INSTANT_UPLOAD(0),
+    UPLOADING(1),
+    UPLOAD_FINISH(2)
 }
 
 enum class FileStatusEnum(val value: Int) {

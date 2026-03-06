@@ -10,7 +10,7 @@ import com.computer.skyvault.MainActivity
 import com.computer.skyvault.common.dto.LoginRequest
 import com.computer.skyvault.databinding.ModuleActivityLoginBinding
 import com.computer.skyvault.manager.LoginManager
-import com.computer.skyvault.service.AccountService
+import com.computer.skyvault.service.client.AccountServiceClient
 import com.computer.skyvault.utils.showToast
 
 
@@ -55,7 +55,7 @@ class LoginActivity : AppCompatActivity() {
                 password = password,
                 verificationCode = code
             )
-            AccountService.login(
+            AccountServiceClient.login(
                 loginRequest,
                 onSuccess = { result ->
                     if (result.code == 200) {

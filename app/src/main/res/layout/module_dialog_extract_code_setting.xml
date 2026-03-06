@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingTop="24dp"
+    android:paddingBottom="24dp"
+    android:background="@android:color/white">
+
+    <!-- 标题栏 -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="提取码设置"
+            android:textSize="18sp"
+            android:textColor="#333333"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:id="@+id/btnComplete"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="16dp"
+            android:text="完成"
+            android:textSize="16sp"
+            android:textColor="#1E80FF"
+            android:padding="8dp"/>
+    </RelativeLayout>
+
+    <!-- 内容区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/bg_extract_code_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:padding="20dp">
+
+        <!-- 系统随机生成提取码 -->
+        <RelativeLayout
+            android:id="@+id/layoutSystemRandom"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:background="?attr/selectableItemBackground">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:text="系统随机生成提取码"
+                android:textSize="16sp"
+                android:textColor="#333333"/>
+
+            <ImageView
+                android:id="@+id/checkSystemRandom"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:src="@drawable/ic_checked"
+                android:visibility="gone"/>
+        </RelativeLayout>
+
+        <!-- 分割线 -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#F0F0F0"/>
+
+        <!-- 自定义提取码 -->
+        <RelativeLayout
+            android:id="@+id/layoutCustomCode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
+            android:background="?attr/selectableItemBackground">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:text="自定义提取码"
+                android:textSize="16sp"
+                android:textColor="#333333"/>
+
+            <ImageView
+                android:id="@+id/checkCustomCode"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:src="@drawable/ic_checked"
+                android:visibility="gone"/>
+        </RelativeLayout>
+
+        <!-- 输入框区域 -->
+        <LinearLayout
+            android:id="@+id/layoutInputArea"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:layout_marginTop="12dp">
+
+            <EditText
+                android:id="@+id/etCustomCode"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="@drawable/bg_extract_code_input"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:hint="请输入 4 位提取码，仅支持数字及英文字"
+                android:textSize="14sp"
+                android:textColor="#333333"
+                android:textColorHint="#999999"
+                android:maxLength="4"
+                android:inputType="textCapCharacters"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="为防止隐私泄露不要输入过于简单的提取码"
+                android:textSize="12sp"
+                android:textColor="#999999"/>
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

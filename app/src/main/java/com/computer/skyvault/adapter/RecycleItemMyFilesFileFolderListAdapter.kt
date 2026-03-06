@@ -10,7 +10,8 @@ import com.computer.skyvault.R
 import com.computer.skyvault.common.enums.FileTypeEnum
 import com.computer.skyvault.common.recycleitem.FileItem
 import com.computer.skyvault.databinding.ModuleRecycleItemMyFilesFileFolderListBinding
-import com.computer.skyvault.service.FileInfoService
+import com.computer.skyvault.service.client.FileInfoServiceClient
+import com.computer.skyvault.utils.DataUtils
 import com.computer.skyvault.utils.DateUtils
 
 private const val TAG = "RecycleItemMyFilesFileF"
@@ -30,7 +31,7 @@ class RecycleItemMyFilesFileFolderListAdapter(
 
     inner class ViewHolder(binding: ModuleRecycleItemMyFilesFileFolderListBinding) : RecyclerView.ViewHolder(binding.root) {
         val rootLayout = binding.rootLayout // item layout
-        val ivFileCover = binding.ivFileCover // 文件封面
+        private val ivFileCover = binding.ivFileCover // 文件封面
         val tvFileName = binding.tvFileName // 文件名称
         val ivStarred = binding.ivStarred // 收藏图标
         val tvUpdateTime = binding.tvUpdateTime  // 上传时间
@@ -65,7 +66,7 @@ class RecycleItemMyFilesFileFolderListAdapter(
             val fileType = FileTypeEnum.getByType(item.fileType)
             when (fileType) {
                 FileTypeEnum.IMAGE, FileTypeEnum.VIDEO -> {
-                    val imageUrl = FileInfoService.getFileCoverPath(item.fileCover.toString())
+                    val imageUrl = FileInfoServiceClient.getFileCoverPath(item.fileCover.toString())
 
                     // 使用 Glide 加载封面图（仅 IMAGE/VIDEO）
                     Glide.with(ivFileCover)
@@ -100,9 +101,15 @@ class RecycleItemMyFilesFileFolderListAdapter(
             // 设置修改时间
             tvUpdateTime.text = DateUtils.formatIsoDateTime(item.lastUpdateTime)
             // 设置文件大小
-            tvFileSize.text = if (fileType == null) "" else item.fileSize.toString()
+            if (item.status == 0) {
+                tvFileSize.text = "转码中"
+            } else if (item.status == 1) {
+                tvFileSize.text = "转码失败"
+            }else {
+                tvFileSize.text = if (fileType == null) "" else DataUtils.formatFileSize(item.fileSize)
+            }
             // 动态更新操作图标
-            val ibOperateIcon = if (isSelectionMode && item.fileId.let { selectedItems.contains(it) } == true) {
+            val ibOperateIcon = if (isSelectionMode && item.fileId.let { selectedItems.contains(it) }) {
                 R.drawable.ic_checked  // 选中时的对勾图标
             } else {
                 R.drawable.ic_pointer   // 未选中时的空心圆图标

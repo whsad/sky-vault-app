@@ -45,11 +45,10 @@ dependencies {
     implementation(libs.androidx.navigation.ui.ktx)
     implementation(libs.gson)
     implementation(libs.okhttp)
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.9.0")
-    implementation("com.github.bumptech.glide:glide:4.16.0")
-    implementation(libs.google.material)
+    implementation(libs.kotlin.reflect)
+    implementation(libs.glide)
+    implementation(libs.androidx.recyclerview)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-
 }

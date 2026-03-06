@@ -15,7 +15,7 @@ import java.io.IOException
 object ApiClient {
     const val TAG = "ApiClient"
     const val IP = "10.21.52.198"
-    const val PORT = "8000"
+    const val PORT = "8080"
     const val BASE_URL = "http://$IP:$PORT/v1/api/"
     const val GET = "GET"
     const val POST = "POST"
@@ -79,7 +79,7 @@ object ApiClient {
                     return
                 }
                 // 解析JSON
-                val obj = DataUtil.parseJsonObj<T>(text)
+                val obj = DataUtils.parseJsonObj<T>(text)
                 if (obj == null) {
                     onMain { onFailure("Invalid JSON") }
                     return

@@ -15,5 +15,13 @@
     <string name="storage_used_title">Storage Used</string>
     <string name="upload_files">Upload Files</string>
 
-
+    <!-- 分享相关字符串 -->
+    <string name="share_code_unset">未设置</string>
+    <string name="share_code_empty_tip">请设置提取码</string>
+    <string name="share_code_custom_empty_tip">请输入自定义提取码</string>
+    <string name="login_expired_tip">登录状态已过期，请重新登录</string>
+    <string name="share_success_tip">分享成功</string>
+    <string name="share_failure_tip">分享失败：%s</string>
+    <string name="share_link_copied_tip">分享链接已复制</string>
+    <string name="share_link_copy_failure_tip">分享链接复制失败</string>
 </resources>

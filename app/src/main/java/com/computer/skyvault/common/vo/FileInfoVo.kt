@@ -19,8 +19,8 @@ data class FileInfoVo(
 
 // 上传结果 VO
 data class UploadResultVo(
-    val fileId: String? = null,
-    val status: String? = null
+    val file_id: String? = null,
+    val status: Int? = null
 )
 
 // 文件夹 VO
