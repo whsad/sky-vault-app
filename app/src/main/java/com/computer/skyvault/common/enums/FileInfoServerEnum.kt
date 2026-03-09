@@ -1,5 +1,7 @@
 package com.computer.skyvault.common.enums
 
+import com.computer.skyvault.R
+
 /**
  * 文件服务器相关枚举类
  */

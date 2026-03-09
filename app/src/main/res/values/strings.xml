@@ -15,6 +15,8 @@
     <string name="storage_used_title">Storage Used</string>
     <string name="upload_files">Upload Files</string>
 
+    <string name="title_transfer">文件传输</string>
+
     <!-- 分享相关字符串 -->
     <string name="share_code_unset">未设置</string>
     <string name="share_code_empty_tip">请设置提取码</string>

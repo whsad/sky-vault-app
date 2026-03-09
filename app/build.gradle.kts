@@ -48,6 +48,7 @@ dependencies {
     implementation(libs.kotlin.reflect)
     implementation(libs.glide)
     implementation(libs.androidx.recyclerview)
+    implementation("androidx.fragment:fragment-ktx:1.6.1")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

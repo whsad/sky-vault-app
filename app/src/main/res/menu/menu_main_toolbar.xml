@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <!-- 传输图标按钮 -->
+    <item
+        android:id="@+id/menu_transfer"
+        android:contentDescription="文件传输"
+        android:icon="@drawable/ic_transfer"
+        android:title="@string/title_transfer"
+        app:showAsAction="always" />
+</menu>

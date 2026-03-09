@@ -5,7 +5,18 @@
     android:orientation="vertical"
     android:padding="24dp">
 
-    <ImageView
+    <TextView
+        android:id="@+id/operateDesc"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAlignment="center"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="20dp"
+        android:text="新建文件夹"/>
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/fileCover"
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:layout_gravity="center_horizontal"
@@ -17,7 +28,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
-        android:hint="文件夹名称">
+        android:hint="文件名">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etFolderName"

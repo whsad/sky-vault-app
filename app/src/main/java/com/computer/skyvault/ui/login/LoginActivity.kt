@@ -8,7 +8,7 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.computer.skyvault.MainActivity
 import com.computer.skyvault.common.dto.LoginRequest
-import com.computer.skyvault.databinding.ModuleActivityLoginBinding
+import com.computer.skyvault.databinding.LoginActivityBinding
 import com.computer.skyvault.manager.LoginManager
 import com.computer.skyvault.service.client.AccountServiceClient
 import com.computer.skyvault.utils.showToast
@@ -18,7 +18,7 @@ private const val TAG = "LoginActivity"
 
 class LoginActivity : AppCompatActivity() {
 
-    private lateinit var binding: ModuleActivityLoginBinding
+    private lateinit var binding: LoginActivityBinding
     private lateinit var loginManager: LoginManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,7 +37,7 @@ class LoginActivity : AppCompatActivity() {
         window.statusBarColor = Color.WHITE
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
 
-        binding = ModuleActivityLoginBinding.inflate(layoutInflater)
+        binding = LoginActivityBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         binding.btnLogin.setOnClickListener {

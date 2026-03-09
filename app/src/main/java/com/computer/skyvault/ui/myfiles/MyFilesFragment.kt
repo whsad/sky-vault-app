@@ -8,8 +8,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AnimationUtils
+import android.widget.Button
+import android.widget.ProgressBar
+import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.widget.AppCompatImageView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.computer.skyvault.MainActivity
@@ -17,19 +21,22 @@ import com.computer.skyvault.R
 import com.computer.skyvault.adapter.RecycleItemMyFilesFileFolderListAdapter
 import com.computer.skyvault.common.dto.LoadFileListRequest
 import com.computer.skyvault.common.dto.NewFolderRequest
+import com.computer.skyvault.common.enums.FileStatusEnum
+import com.computer.skyvault.common.enums.FileTypeEnum
 import com.computer.skyvault.common.recycleitem.FileItem
-import com.computer.skyvault.databinding.ModuleFragmentMyFilesBinding
+import com.computer.skyvault.databinding.MyfilesFragmentBinding
 import com.computer.skyvault.manager.LoginManager
 import com.computer.skyvault.service.FileInfoService
 import com.computer.skyvault.service.FileShareService
 import com.computer.skyvault.ui.login.LoginActivity
+import com.computer.skyvault.utils.DataUtils
 import com.computer.skyvault.utils.showToast
 
 private const val TAG = "MyFilesFragment"
 
 class MyFilesFragment : Fragment() {
 
-    private var _binding: ModuleFragmentMyFilesBinding? = null
+    private var _binding: MyfilesFragmentBinding? = null
     private val binding get() = _binding!!
     private lateinit var adapter: RecycleItemMyFilesFileFolderListAdapter
     private lateinit var loginManager: LoginManager
@@ -53,7 +60,7 @@ class MyFilesFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = ModuleFragmentMyFilesBinding.inflate(inflater, container, false)
+        _binding = MyfilesFragmentBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -216,7 +223,6 @@ class MyFilesFragment : Fragment() {
                 adapter.submitList(fileList)
             }
         }
-//        fileInfoService.loadFileList(req, token)
     }
 
     private fun refreshFileList() {
@@ -273,10 +279,36 @@ class MyFilesFragment : Fragment() {
     private fun downloadSelectedFiles() {
         val selectedItems = adapter.getSelectedItems()
         if (selectedItems.isNotEmpty()) {
-            "Downloading ${selectedItems.size} files".showToast(requireContext())
-            Log.d(TAG, "Downloading files: ${selectedItems.map { it.fileName }}")
+            // 过滤掉文件夹，只下载文件
+            val filesToDownload = selectedItems.filter {
+                it.folderType == null || it.folderType == 0
+            }
+
+            if (filesToDownload.isEmpty()) {
+                "选择的都是文件夹，无法下载".showToast(requireContext())
+                adapter.exitSelectionMode()
+                return
+            }
+
+            // todo 需要同步到传输列表中
+
+            // 逐个下载文件
+            var downloadedCount = 0
+            filesToDownload.forEachIndexed { index, fileItem ->
+                fileInfoService.downloadFile(fileItem) { progress ->
+                    // 更新进度（这里可以更新 UI 显示进度）
+                    Log.d(TAG, "Downloading ${fileItem.fileName}: $progress%")
+                }
+
+                // 简单计数（实际应该用更精确的方式跟踪每个文件的下载状态）
+                downloadedCount++
+                if (downloadedCount == filesToDownload.size) {
+                    "已开始下载 ${filesToDownload.size} 个文件".showToast(requireContext())
+                    adapter.exitSelectionMode()
+                }
+            }
         } else {
-            "Please select files first".showToast(requireContext())
+            "请先选择文件".showToast(requireContext())
         }
     }
 
@@ -302,6 +334,38 @@ class MyFilesFragment : Fragment() {
         }
     }
 
+    private fun showDeleteConfirmationDialog(selectedItems: List<FileItem>) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Confirm Delete")
+            .setMessage("Are you sure you want to delete ${selectedItems.size} file(s)? This action cannot be undone.")
+            .setPositiveButton("Delete") { _, _ ->
+                // 执行删除操作
+                Log.d(TAG, "Deleting files: ${selectedItems.map { it.fileName }}")
+                "Deleting ${selectedItems.size} files...".showToast(requireContext())
+                // 执行删除操作
+                executeDeleteFiles(selectedItems)
+
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    /**
+     * 执行删除文件
+     */
+    private fun executeDeleteFiles(selectedItems: List<FileItem>) {
+        // 提取文件 ID 列表
+        val fileIds = selectedItems.map { it.fileId }
+
+        // 调用服务层删除
+        fileInfoService.deleteFiles(fileIds) {
+            // 退出选择模式
+            adapter.exitSelectionMode()
+            // 删除成功，刷新文件列表
+            refreshFileList()
+        }
+    }
+
     private fun favoriteSelectedFiles() {
         val selectedItems = adapter.getSelectedItems()
         if (selectedItems.isNotEmpty()) {
@@ -316,14 +380,75 @@ class MyFilesFragment : Fragment() {
         val selectedItems = adapter.getSelectedItems()
         if (selectedItems.isNotEmpty()) {
             if (selectedItems.size == 1) {
-                "Renaming file: ${selectedItems[0].fileName}".showToast(requireContext())
+                showRenameDialog(selectedItems[0])
             } else {
-                "Renaming ${selectedItems.size} files".showToast(requireContext())
+                "Batch renaming is not supported at this time".showToast(requireContext())
             }
         } else {
             "Please select files first".showToast(requireContext())
         }
     }
+
+    /**
+     * 显示重命名对话框
+     */
+    private fun showRenameDialog(fileItem: FileItem) {
+        val dialog = AlertDialog.Builder(requireContext())
+        val inflater = layoutInflater
+        val view = inflater.inflate(R.layout.module_dialog_create_folder, null)
+        dialog.setView(view)
+
+        val operateDesc = view.findViewById<TextView>(R.id.operateDesc)
+        val fileCover = view.findViewById<AppCompatImageView>(R.id.fileCover)
+        val etFolderName =
+            view.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etFolderName)
+        val tilFolderName =
+            view.findViewById<com.google.android.material.textfield.TextInputLayout>(R.id.tilFolderName)
+
+        // 设置操作说明
+        operateDesc.text = "重命名"
+        val typeEnum = FileTypeEnum.getByType(fileItem.fileType)
+        DataUtils.setFileCoverByType(typeEnum, fileItem, fileCover)
+
+        // 设置当前文件名
+        etFolderName.setText(fileItem.fileName)
+        etFolderName.setSelection(fileItem.fileName.length)
+
+        dialog.setPositiveButton("确定") { _, _ ->
+            val newFileName = etFolderName.text.toString().trim()
+            if (newFileName.isEmpty()) {
+                tilFolderName.error = "文件名不能为空"
+                return@setPositiveButton
+            }
+
+            if (newFileName == fileItem.fileName) {
+                "文件名未改变".showToast(requireContext())
+                return@setPositiveButton
+            }
+
+            // 调用重命名接口
+            fileInfoService.renameFile(fileItem.fileId, newFileName) {
+                // 重命名成功，刷新文件列表
+                adapter.exitSelectionMode()
+                refreshFileList()
+            }
+        }
+
+        dialog.setNegativeButton("取消") { dg, _ ->
+            dg.dismiss()
+        }
+
+        val alertDialog = dialog.create()
+        // 设置圆角
+        alertDialog.window?.setBackgroundDrawable(
+            android.graphics.drawable.GradientDrawable().apply {
+                cornerRadius = 16f * requireContext().resources.displayMetrics.density
+                setColor(android.graphics.Color.WHITE)
+            }
+        )
+        alertDialog.show()
+    }
+
 
     private fun moveSelectedFiles() {
         val selectedItems = adapter.getSelectedItems()
@@ -348,20 +473,7 @@ class MyFilesFragment : Fragment() {
         }
     }
 
-    private fun showDeleteConfirmationDialog(selectedItems: List<FileItem>) {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Confirm Delete")
-            .setMessage("Are you sure you want to delete ${selectedItems.size} file(s)? This action cannot be undone.")
-            .setPositiveButton("Delete") { _, _ ->
-                // 执行删除操作
-                Log.d(TAG, "Deleting files: ${selectedItems.map { it.fileName }}")
-                "Deleting ${selectedItems.size} files...".showToast(requireContext())
-                // 这里可以调用删除API
-                adapter.exitSelectionMode()
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
+
 
     fun exitSelectionMode() = adapter.exitSelectionMode()
 

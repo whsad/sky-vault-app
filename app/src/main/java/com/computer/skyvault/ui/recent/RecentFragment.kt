@@ -7,11 +7,11 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import com.computer.skyvault.databinding.ModuleFragmentRecentBinding
+import com.computer.skyvault.databinding.RecentFragmentBinding
 
 class RecentFragment : Fragment() {
 
-    private var _binding: ModuleFragmentRecentBinding? = null
+    private var _binding: RecentFragmentBinding? = null
 
     // This property is only valid between onCreateView and
     // onDestroyView.
@@ -25,7 +25,7 @@ class RecentFragment : Fragment() {
         val galleryViewModel =
             ViewModelProvider(this).get(RecentViewModel::class.java)
 
-        _binding = ModuleFragmentRecentBinding.inflate(inflater, container, false)
+        _binding = RecentFragmentBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
         val textView: TextView = binding.textRecent

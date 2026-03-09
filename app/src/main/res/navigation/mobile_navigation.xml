@@ -9,35 +9,35 @@
         android:id="@+id/nav_my_files"
         android:name="com.computer.skyvault.ui.myfiles.MyFilesFragment"
         android:label="@string/menu_my_files"
-        tools:layout="@layout/module_fragment_my_files" />
+        tools:layout="@layout/myfiles_fragment" />
 
     <fragment
         android:id="@+id/nav_recent"
         android:name="com.computer.skyvault.ui.recent.RecentFragment"
         android:label="@string/menu_recent"
-        tools:layout="@layout/module_fragment_recent" />
+        tools:layout="@layout/recent_fragment" />
 
     <fragment
         android:id="@+id/nav_shared"
         android:name="com.computer.skyvault.ui.shared.SharedFragment"
         android:label="@string/menu_shared"
-        tools:layout="@layout/module_fragment_shared" />
+        tools:layout="@layout/shared_fragment" />
 
     <fragment
         android:id="@+id/nav_starred"
         android:name="com.computer.skyvault.ui.starred.StarredFragment"
         android:label="@string/menu_starred"
-        tools:layout="@layout/module_fragment_starred" />
+        tools:layout="@layout/starred_fragment" />
 
     <fragment
         android:id="@+id/nav_categories"
         android:name="com.computer.skyvault.ui.categories.CategoriesFragment"
         android:label="@string/menu_categories"
-        tools:layout="@layout/module_fragment_categories" />
+        tools:layout="@layout/categories_fragment" />
 
     <fragment
         android:id="@+id/nav_trash"
         android:name="com.computer.skyvault.ui.trash.TrashFragment"
         android:label="@string/menu_trash"
-        tools:layout="@layout/module_fragment_trash" />
+        tools:layout="@layout/trash_fragment" />
 </navigation>

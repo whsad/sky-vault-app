@@ -11,15 +11,15 @@ import androidx.recyclerview.widget.RecyclerView
 import com.computer.skyvault.R
 import com.computer.skyvault.common.recycleitem.MenuItem
 import com.computer.skyvault.common.recycleitem.NavItem
-import com.computer.skyvault.databinding.ModuleRecycleItemCustomNavDividerBinding
-import com.computer.skyvault.databinding.ModuleRecycleItemCustomNavMenuBinding
+import com.computer.skyvault.databinding.CustomviewRecycleItemNavDividerBinding
+import com.computer.skyvault.databinding.CustomviewRecycleItemNavMenuBinding
 
 class RecycleItemCustomNavAdapter(
     private var items: List<NavItem>,
     private val onItemClickListener: (Int) -> Unit
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    inner class MenuViewHolder(binding: ModuleRecycleItemCustomNavMenuBinding) : RecyclerView.ViewHolder(binding.root) {
+    inner class MenuViewHolder(binding: CustomviewRecycleItemNavMenuBinding) : RecyclerView.ViewHolder(binding.root) {
         private val itemLayout: LinearLayout = binding.itemLayout
         private val iconView: AppCompatImageView = binding.icon
         private val titleView: TextView = binding.title
@@ -69,19 +69,19 @@ class RecycleItemCustomNavAdapter(
         }
     }
 
-    inner class DividerViewHolder(binding: ModuleRecycleItemCustomNavDividerBinding) : RecyclerView.ViewHolder(binding.root)
+    inner class DividerViewHolder(binding: CustomviewRecycleItemNavDividerBinding) : RecyclerView.ViewHolder(binding.root)
 
     override fun getItemViewType(position: Int): Int = items[position].type
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when (viewType) {
             NavItem.TYPE_MENU -> {
-                val binding = ModuleRecycleItemCustomNavMenuBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+                val binding = CustomviewRecycleItemNavMenuBinding.inflate(LayoutInflater.from(parent.context), parent, false)
                 MenuViewHolder(binding)
             }
 
             NavItem.TYPE_DIVIDER -> {
-                val binding = ModuleRecycleItemCustomNavDividerBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+                val binding = CustomviewRecycleItemNavDividerBinding.inflate(LayoutInflater.from(parent.context), parent, false)
                 DividerViewHolder(binding)
             }
 

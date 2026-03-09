@@ -1,13 +1,18 @@
 package com.computer.skyvault.service.client
 
+import com.computer.skyvault.common.dto.CreateDownloadUrlRequest
+import com.computer.skyvault.common.dto.DeleteFileRequest
 import com.computer.skyvault.common.dto.LoadFileListRequest
 import com.computer.skyvault.common.dto.NewFolderRequest
+import com.computer.skyvault.common.dto.RenameRequest
 import com.computer.skyvault.common.enums.UploadStatusEnum
 import com.computer.skyvault.common.recycleitem.FileItem
+import com.computer.skyvault.common.vo.FileInfoVo
 import com.computer.skyvault.common.vo.PageResponseResult
 import com.computer.skyvault.common.vo.R
 import com.computer.skyvault.common.vo.UploadResultVo
 import com.computer.skyvault.utils.ApiClient
+import com.computer.skyvault.utils.ApiClient.client
 import com.computer.skyvault.utils.DataUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -151,14 +156,6 @@ object FileInfoServiceClient {
         }
     }
 
-//    // 简化的上传方法（不显示详细进度）
-//    suspend fun uploadFile(
-//        filePath: String,
-//        fileName: String,
-//        filePid: String = "0",
-//        token: String
-//    ): Result<String> = uploadFileWithChunks(filePath, fileName, filePid, token) { _, _ -> }
-
     fun getFileCoverPath(
         fileCoverPath: String
     ): String {
@@ -174,6 +171,79 @@ object FileInfoServiceClient {
     ) {
         ApiClient.sendOkHttpRequest<PageResponseResult<FileItem>>(
             path = "$PREFIX/newFolder",
+            method = ApiClient.POST,
+            body = DataUtils.toJsonRequestBody(req),
+            addHeaders = addHeaders,
+            onFailure = onFailure,
+            onResponse = onSuccess
+        )
+    }
+
+    fun createDownloadUrl(
+        req: CreateDownloadUrlRequest,
+        addHeaders: (Request.Builder) -> Unit = {},
+        onSuccess: (R<String>) -> Unit,
+        onFailure: (String) -> Unit
+    ) {
+        ApiClient.sendOkHttpRequest<R<String>>(
+            path = "$PREFIX/createDownloadUrl",
+            method = ApiClient.POST,
+            body = DataUtils.toJsonRequestBody(req),
+            addHeaders = addHeaders,
+            onFailure = onFailure,
+            onResponse = onSuccess
+        )
+    }
+
+    fun downloadFile(
+        code: String,
+        onSuccess: (okhttp3.Response) -> Unit,
+        onFailure: (String) -> Unit
+    ) {
+        val url = "${ApiClient.BASE_URL}$PREFIX/download/$code"
+        val request = Request.Builder()
+            .url(url)
+            .get()
+            .build()
+
+        client.newCall(request).enqueue(object : okhttp3.Callback {
+            override fun onFailure(call: okhttp3.Call, e: java.io.IOException) {
+                ApiClient.onMain { onFailure("Network Error: ${e.message}") }
+            }
+
+            override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+                ApiClient.onMain { onSuccess(response) }
+            }
+        })
+    }
+
+    /**
+     * 删除文件（移到回收站）
+     */
+    fun deleteFile(
+        req: DeleteFileRequest,
+        addHeaders: (Request.Builder) -> Unit = {},
+        onSuccess: (R<String>) -> Unit,
+        onFailure: (String) -> Unit
+    ) {
+        ApiClient.sendOkHttpRequest<R<String>>(
+            path = "$PREFIX/delFile",
+            method = ApiClient.DELETE,
+            body = DataUtils.toJsonRequestBody(req),
+            addHeaders = addHeaders,
+            onFailure = onFailure,
+            onResponse = onSuccess
+        )
+    }
+
+    fun rename(
+        req: RenameRequest,
+        addHeaders: (Request.Builder) -> Unit = {},
+        onSuccess: (R<FileInfoVo>) -> Unit,
+        onFailure: (String) -> Unit
+    ) {
+        ApiClient.sendOkHttpRequest<R<FileInfoVo>>(
+            path = "$PREFIX/rename",
             method = ApiClient.POST,
             body = DataUtils.toJsonRequestBody(req),
             addHeaders = addHeaders,

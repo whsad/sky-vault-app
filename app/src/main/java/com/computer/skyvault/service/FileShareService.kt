@@ -27,6 +27,9 @@ import com.computer.skyvault.utils.ApiClient.onMain
 import com.computer.skyvault.utils.showToast
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import androidx.core.graphics.toColorInt
+import com.computer.skyvault.utils.setSingleClickListener
+import com.computer.skyvault.utils.setViewClickListener
 
 class FileShareService(
     private val context: Context,
@@ -64,16 +67,6 @@ class FileShareService(
         if (!isRememberValidType) {
             currentValidType = ShareValidTypeEnum.FOREVER.typeValue
         }
-//        val dialog = BottomSheetDialog(context, R.style.BottomSheetDialog)
-//        val dialogView = LayoutInflater.from(context).inflate(R.layout.module_dialog_share_file, null)
-//        dialog.setContentView(dialogView)
-//        dialog.behavior.apply {
-//            isHideable = true
-//            state = BottomSheetBehavior.STATE_EXPANDED
-//        }
-//        // 防止弹窗外部点击消失（可选，根据业务调整）
-//        dialog.setCanceledOnTouchOutside(false)
-
         val (dialog, dialogView) = createBottomSheetDialog(R.layout.module_dialog_share_file)
 
         // 绑定控件
@@ -86,12 +79,6 @@ class FileShareService(
         val btnClose = dialogView.findViewById<ImageButton>(R.id.btnClose)
         val btnHelp = dialogView.findViewById<ImageView>(R.id.btnHelp)
         // todo 实现自动填充验证码进入分享文件页
-
-//        // 初始化显示
-//        tvValidType.text = getValidTypeText(currentValidType)
-//        val randomCode = generateRandomCode()
-//        currentCode = randomCode
-//        tvExtractCode.text = currentCode
 
         // 初始化UI
         tvValidType.text = getValidTypeText(currentValidType)
@@ -153,10 +140,6 @@ class FileShareService(
         isCustom: Boolean,
         onConfirm: (String?, Boolean) -> Unit
     ) {
-//        val dialogView =
-//            LayoutInflater.from(context).inflate(R.layout.module_dialog_extract_code_setting, null)
-//        val dialog = BottomSheetDialog(context, R.style.BottomSheetDialog)
-//        dialog.setContentView(dialogView)
         val (dialog, dialogView) = createBottomSheetDialog(R.layout.module_dialog_extract_code_setting)
 
         val btnComplete = dialogView.findViewById<TextView>(R.id.btnComplete)
@@ -201,33 +184,6 @@ class FileShareService(
             etCustomCode.requestFocus()
         }
 
-
-//        if (isSystemRandom) {
-//            checkSystemRandom.visibility = View.VISIBLE
-//            checkCustomCode.visibility = View.GONE
-//            layoutInputArea.visibility = View.GONE
-//        } else {
-//            checkSystemRandom.visibility = View.GONE
-//            checkCustomCode.visibility = View.VISIBLE
-//            layoutInputArea.visibility = View.VISIBLE
-//            etCustomCode.setText(currentCode ?: "")
-//        }
-
-//        layoutSystemRandom.setOnClickListener {
-//            isSystemRandom = true
-//            checkSystemRandom.visibility = View.VISIBLE
-//            checkCustomCode.visibility = View.GONE
-//            layoutInputArea.visibility = View.GONE
-//        }
-//
-//        layoutCustomCode.setOnClickListener {
-//            isSystemRandom = false
-//            checkSystemRandom.visibility = View.GONE
-//            checkCustomCode.visibility = View.VISIBLE
-//            layoutInputArea.visibility = View.VISIBLE
-//            etCustomCode.requestFocus()
-//        }
-
         setSingleClickListener(btnComplete) {
             val code = if (isSystemRandom) {
                 generateRandomExtractCode()
@@ -252,11 +208,6 @@ class FileShareService(
      * 显示有效期选择对话框
      */
     fun showValidTypeSelectorDialog(onConfirm: (Int, String?) -> Unit) {
-//        val dialogView =
-//            LayoutInflater.from(context).inflate(R.layout.module_dialog_valid_type_selector, null)
-//        val dialog = BottomSheetDialog(context, R.style.BottomSheetDialog)
-//        dialog.setContentView(dialogView)
-
         val (dialog, dialogView) = createBottomSheetDialog(R.layout.module_dialog_valid_type_selector)
 
         // 绑定控件
@@ -280,26 +231,6 @@ class FileShareService(
             ShareValidTypeEnum.ONE_YEAR.typeValue to dialogView.findViewById<ImageView>(R.id.check365Days),
             ShareValidTypeEnum.FOREVER.typeValue to dialogView.findViewById<ImageView>(R.id.checkForever)
         )
-
-
-        /*
-                val btnClose = dialogView.findViewById<ImageButton>(R.id.btnClose)
-                val layout7Days = dialogView.findViewById<RelativeLayout>(R.id.layout7Days)
-                val layout14Days = dialogView.findViewById<RelativeLayout>(R.id.layout14Days)
-                val layout30Days = dialogView.findViewById<RelativeLayout>(R.id.layout30Days)
-                val layout365Days = dialogView.findViewById<RelativeLayout>(R.id.layout365Days)
-                val layoutForever = dialogView.findViewById<RelativeLayout>(R.id.layoutForever)
-                val layoutRemember = dialogView.findViewById<RelativeLayout>(R.id.layoutRemember)
-
-                val check7Days = dialogView.findViewById<ImageView>(R.id.check7Days)
-                val check14Days = dialogView.findViewById<ImageView>(R.id.check14Days)
-                val check30Days = dialogView.findViewById<ImageView>(R.id.check30Days)
-                val check365Days = dialogView.findViewById<ImageView>(R.id.check365Days)
-                val checkForever = dialogView.findViewById<ImageView>(R.id.checkForever)
-
-                val swRemember = dialogView.findViewById<SwitchCompat>(R.id.swRemember)
-                val btnConfirm = dialogView.findViewById<Button>(R.id.btnConfirm)
-        */
 
         if (isRememberValidType) swRemember.isChecked = isRememberValidType
         var selectedType = currentValidType
@@ -331,74 +262,7 @@ class FileShareService(
         }
 
         dialog.show()
-
-//        // 根据当前选中的位置显示对应的勾选标记
-//        when (selectedPosition) {
-//            0 -> check7Days.visibility = View.VISIBLE
-//            1 -> check14Days.visibility = View.VISIBLE
-//            2 -> check30Days.visibility = View.VISIBLE
-//            3 -> check365Days.visibility = View.VISIBLE
-//            4 -> checkForever.visibility = View.VISIBLE
-//        }
-//
-//        fun hideAllChecks() {
-//            check7Days.visibility = View.GONE
-//            check14Days.visibility = View.GONE
-//            check30Days.visibility = View.GONE
-//            check365Days.visibility = View.GONE
-//            checkForever.visibility = View.GONE
-//        }
-//
-//        layout7Days.setOnClickListener {
-//            hideAllChecks()
-//            check7Days.visibility = View.VISIBLE
-//            selectedPosition = 0
-//        }
-//
-//        layout14Days.setOnClickListener {
-//            hideAllChecks()
-//            check14Days.visibility = View.VISIBLE
-//            selectedPosition = 1
-//        }
-//
-//        layout30Days.setOnClickListener {
-//            hideAllChecks()
-//            check30Days.visibility = View.VISIBLE
-//            selectedPosition = 2
-//        }
-//
-//        layout365Days.setOnClickListener {
-//            hideAllChecks()
-//            check365Days.visibility = View.VISIBLE
-//            selectedPosition = 3
-//        }
-//
-//        layoutForever.setOnClickListener {
-//            hideAllChecks()
-//            checkForever.visibility = View.VISIBLE
-//            selectedPosition = 4
-//        }
-//
-//        layoutRemember.setOnClickListener {
-//            swRemember.isChecked = !swRemember.isChecked
-//        }
-//
-//        btnConfirm.setOnClickListener {
-//            if (swRemember.isChecked) {
-//                currentValidType = selectedPosition
-//                isRememberValidType = true
-//            } else {
-//                isRememberValidType = false
-//            }
-//
-//            onConfirm(selectedPosition, currentExtractCode)
-//            dialog.dismiss()
-//        }
-//
-//        dialog.show()
     }
-
-
 
     /**
      * 分享文件
@@ -447,11 +311,6 @@ class FileShareService(
      * 显示分享结果对话框
      */
     private fun showShareResultDialog(result: FileShare) {
-//        val dialog = BottomSheetDialog(context, R.style.BottomSheetDialog)
-//        val dialogView = LayoutInflater.from(context).inflate(R.layout.module_dialog_share_result, null)
-//        dialog.setContentView(dialogView)
-//        dialog.behavior.isHideable = true
-//        dialog.behavior.state = BottomSheetBehavior.STATE_EXPANDED
         val (dialog, dialogView) = createBottomSheetDialog(R.layout.module_dialog_share_result)
 
 
@@ -472,10 +331,6 @@ class FileShareService(
 
         setSingleClickListener(btnCopyLink) {
             copyTextToClipboard(context, shareUrl, context.getString(R.string.share_link_copied_tip))
-//            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-//            val clip = ClipData.newPlainText("分享链接", shareUrl)
-//            clipboard.setPrimaryClip(clip)
-//            "分享链接已复制".showToast(context)
         }
 
         setViewClickListener(btnClose) { dialog.dismiss() }
@@ -496,34 +351,32 @@ class FileShareService(
             isHideable = true
             state = BottomSheetBehavior.STATE_EXPANDED
         }
-//        // 防止弹窗外部点击消失（可选，根据业务调整）
-//        dialog.setCanceledOnTouchOutside(false)
         return Pair(dialog, dialogView)
     }
 
-    /**
-     * 设置View点击事件（简化重复代码）
-     */
-    private fun setViewClickListener(view: View, onClick: () -> Unit) {
-        view.setOnClickListener { onClick.invoke() }
-    }
-
-    /**
-     * 设置防重复点击的View点击事件
-     * @param interval 防重复点击间隔（默认500ms）
-     */
-    private fun setSingleClickListener(view: View, interval: Long = 500, onClick: () -> Unit) {
-        view.setOnClickListener(object : View.OnClickListener {
-            private var lastClickTime = 0L
-            override fun onClick(v: View?) {
-                val currentTime = System.currentTimeMillis()
-                if (currentTime - lastClickTime >= interval) {
-                    lastClickTime = currentTime
-                    onClick.invoke()
-                }
-            }
-        })
-    }
+//    /**
+//     * 设置View点击事件（简化重复代码）
+//     */
+//    private fun setViewClickListener(view: View, onClick: () -> Unit) {
+//        view.setOnClickListener { onClick.invoke() }
+//    }
+//
+//    /**
+//     * 设置防重复点击的View点击事件
+//     * @param interval 防重复点击间隔（默认500ms）
+//     */
+//    private fun setSingleClickListener(view: View, interval: Long = 500, onClick: () -> Unit) {
+//        view.setOnClickListener(object : View.OnClickListener {
+//            private var lastClickTime = 0L
+//            override fun onClick(v: View?) {
+//                val currentTime = System.currentTimeMillis()
+//                if (currentTime - lastClickTime >= interval) {
+//                    lastClickTime = currentTime
+//                    onClick.invoke()
+//                }
+//            }
+//        })
+//    }
 
     /**
      * 更新提取码选择的勾选状态
@@ -564,7 +417,7 @@ class FileShareService(
                 text = tooltipText
                 textSize = 14f
                 setTextColor(android.graphics.Color.WHITE)
-                setBackgroundColor(android.graphics.Color.parseColor("#333333"))
+                setBackgroundColor("#333333".toColorInt())
                 setPadding(16, 12, 16, 12)
                 maxWidth = 600
                 setLineSpacing(0f, 1.2f)

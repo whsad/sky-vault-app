@@ -1,15 +1,17 @@
 package com.computer.skyvault.adapter
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.widget.AppCompatImageView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.computer.skyvault.R
 import com.computer.skyvault.common.enums.FileTypeEnum
 import com.computer.skyvault.common.recycleitem.FileItem
-import com.computer.skyvault.databinding.ModuleRecycleItemMyFilesFileFolderListBinding
+import com.computer.skyvault.databinding.MyfilesRecycleItemFileFolderListBinding
 import com.computer.skyvault.service.client.FileInfoServiceClient
 import com.computer.skyvault.utils.DataUtils
 import com.computer.skyvault.utils.DateUtils
@@ -29,7 +31,7 @@ class RecycleItemMyFilesFileFolderListAdapter(
     var onSelectionChanged: ((List<FileItem>) -> Unit)? = null
     var onSelectionModeChanged: ((Boolean, Int) -> Unit)? = null
 
-    inner class ViewHolder(binding: ModuleRecycleItemMyFilesFileFolderListBinding) : RecyclerView.ViewHolder(binding.root) {
+    inner class ViewHolder(binding: MyfilesRecycleItemFileFolderListBinding) : RecyclerView.ViewHolder(binding.root) {
         val rootLayout = binding.rootLayout // item layout
         private val ivFileCover = binding.ivFileCover // 文件封面
         val tvFileName = binding.tvFileName // 文件名称
@@ -64,36 +66,7 @@ class RecycleItemMyFilesFileFolderListAdapter(
         fun bindItem(item: FileItem) {
             // 根据文件类型设置封面图
             val fileType = FileTypeEnum.getByType(item.fileType)
-            when (fileType) {
-                FileTypeEnum.IMAGE, FileTypeEnum.VIDEO -> {
-                    val imageUrl = FileInfoServiceClient.getFileCoverPath(item.fileCover.toString())
-
-                    // 使用 Glide 加载封面图（仅 IMAGE/VIDEO）
-                    Glide.with(ivFileCover)
-                        .load(imageUrl)
-                        .placeholder(R.drawable.ic_file_type_folder)  // 加载中占位图
-                        .error(R.drawable.ic_file_type_other)         // 失败回退图
-                        .diskCacheStrategy(DiskCacheStrategy.ALL)
-                        .into(ivFileCover)
-                }
-                else -> {
-                    // 其他类型：直接设置静态图标资源
-                    val iconRes = when (fileType) {
-                        FileTypeEnum.AUDIO -> R.drawable.ic_file_type_audio
-                        FileTypeEnum.PDF -> R.drawable.ic_file_type_pdf
-                        FileTypeEnum.WORD -> R.drawable.ic_file_type_word
-                        FileTypeEnum.EXCEL -> R.drawable.ic_file_type_excel
-                        FileTypeEnum.TXT -> R.drawable.ic_file_type_txt
-                        FileTypeEnum.CODE -> R.drawable.ic_file_type_code
-                        FileTypeEnum.ZIP -> R.drawable.ic_file_type_zip
-                        FileTypeEnum.APP -> R.drawable.ic_file_type_app
-                        FileTypeEnum.BT_SEEDS -> R.drawable.ic_file_type_bt
-                        FileTypeEnum.OTHERS -> R.drawable.ic_file_type_other
-                        else -> R.drawable.ic_file_type_folder
-                    }
-                    ivFileCover.setImageResource(iconRes)
-                }
-            }
+            DataUtils.setFileCoverByType(fileType, item, ivFileCover)
             // 设置文件名称
             tvFileName.text = item.fileName
             // 设置是否收藏
@@ -118,8 +91,10 @@ class RecycleItemMyFilesFileFolderListAdapter(
         }
     }
 
+
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val binding = ModuleRecycleItemMyFilesFileFolderListBinding.inflate(
+        val binding = MyfilesRecycleItemFileFolderListBinding.inflate(
             LayoutInflater.from(parent.context),
             parent,
             false
@@ -236,8 +211,12 @@ class RecycleItemMyFilesFileFolderListAdapter(
 
     fun getSelectedCount() = selectedItems.size
 
+    fun getCurrentList(): List<FileItem> = items
+
     fun submitList(newItems: List<FileItem>) {
         items = newItems
-        notifyItemRangeChanged(0, itemCount)
+        Log.d(TAG, "submitList: ${selectedItems}")
+//        notifyItemRangeChanged(0, itemCount)
+        notifyDataSetChanged()
     }
 }

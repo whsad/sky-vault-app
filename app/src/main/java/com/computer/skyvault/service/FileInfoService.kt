@@ -1,7 +1,9 @@
 package com.computer.skyvault.service
 
+import android.app.DownloadManager
 import android.content.Context
 import android.net.Uri
+import android.os.Environment
 import android.provider.OpenableColumns
 import android.util.Log
 import android.view.LayoutInflater
@@ -16,14 +18,18 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import com.computer.skyvault.R
 import com.computer.skyvault.adapter.RecycleItemSelectedFileAdapter
+import com.computer.skyvault.common.dto.CreateDownloadUrlRequest
+import com.computer.skyvault.common.dto.DeleteFileRequest
 import com.computer.skyvault.common.dto.LoadFileListRequest
 import com.computer.skyvault.common.dto.NewFolderRequest
+import com.computer.skyvault.common.dto.RenameRequest
 import com.computer.skyvault.common.dto.SelectedFile
 import com.computer.skyvault.common.recycleitem.FileItem
-import com.computer.skyvault.databinding.ModuleFragmentMyFilesBinding
+import com.computer.skyvault.databinding.MyfilesFragmentBinding
 import com.computer.skyvault.manager.LoginManager
 import com.computer.skyvault.service.client.FileInfoServiceClient
 import com.computer.skyvault.ui.login.LoginActivity
+import com.computer.skyvault.utils.ApiClient
 import com.computer.skyvault.utils.ApiClient.onMain
 import com.computer.skyvault.utils.showToast
 import kotlinx.coroutines.Dispatchers
@@ -40,7 +46,7 @@ class FileInfoService(
     private val context: Context,
     private val lifecycleOwner: LifecycleOwner,
     private val loginManager: LoginManager,
-    private val binding: ModuleFragmentMyFilesBinding,
+    private val binding: MyfilesFragmentBinding,
     private val adapter: RecyclerView.Adapter<*>
 ) {
     private var uploadFilesAdapter: RecycleItemSelectedFileAdapter? = null
@@ -311,6 +317,258 @@ class FileInfoService(
             onFailure = { error ->
                 "创建失败：$error".showToast(context)
                 Log.e(TAG, "Create folder failed: $error")
+            }
+        )
+    }
+
+    /**
+     * 下载文件
+     */
+    fun downloadFile(fileItem: FileItem, onProgress: ((Int) -> Unit)? = null) {
+        val token = loginManager.getLoginInfo()?.access_token
+        if (token == null) {
+            "请先登录".showToast(context)
+            return
+        }
+
+        // 检查文件夹类型，不能下载文件夹
+        if (fileItem.folderType != null && fileItem.folderType != 0) {
+            "无法下载文件夹".showToast(context)
+            return
+        }
+
+        // 第一步：创建下载链接获取下载码
+        val req = CreateDownloadUrlRequest(fileId = fileItem.fileId)
+        FileInfoServiceClient.createDownloadUrl(
+            req = req,
+            addHeaders = { it.addHeader("Authorization", "Bearer $token") },
+            onSuccess = { result ->
+                if (result.code == 200) {
+                    val downloadCode = result.data
+                    if (downloadCode != null) {
+                        Log.d(TAG, "Download code created: $downloadCode")
+                        // 第二步：使用下载码下载文件
+                        startDownload(downloadCode, fileItem.fileName, onProgress)
+                    } else {
+                        "获取下载链接失败".showToast(context)
+                    }
+                } else {
+                    result.message.showToast(context)
+                    if (result.code == 401 || result.code == 403) {
+                        loginManager.clearLoginInfo()
+                        context.startActivity(android.content.Intent(context, LoginActivity::class.java))
+                    }
+                }
+            },
+            onFailure = { error ->
+                "网络错误：$error".showToast(context)
+                Log.e(TAG, "Create download url failed: $error")
+            }
+        )
+    }
+
+    /**
+     * 开始下载文件
+     */
+    private fun startDownload(downloadCode: String, fileName: String, onProgress: ((Int) -> Unit)?) {
+        val downloadUrl = "${ApiClient.BASE_URL}file/download/$downloadCode"
+
+        // 使用 Android 系统下载管理器
+        val request = DownloadManager.Request(Uri.parse(downloadUrl))
+            .setTitle(fileName)
+            .setDescription("正在下载：$fileName")
+            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+            .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+            .setAllowedOverMetered(true)
+            .setAllowedOverRoaming(true)
+            .setMimeType(getMimeType(fileName))
+
+        try {
+            val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+            val downloadId = downloadManager.enqueue(request)
+
+            "开始下载：$fileName".showToast(context)
+            Log.d(TAG, "Download started with ID: $downloadId")
+
+            // 监听下载进度（可选）
+            if (onProgress != null) {
+                monitorDownloadProgress(downloadId, onProgress)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Download failed: ${e.message}", e)
+            "下载失败：${e.message}".showToast(context)
+        }
+    }
+
+    /**
+     * 监控下载进度
+     */
+    private fun monitorDownloadProgress(downloadId: Long, onProgress: (Int) -> Unit) {
+        lifecycleOwner.lifecycleScope.launch {
+            while (true) {
+                try {
+                    val query = DownloadManager.Query().setFilterById(downloadId)
+                    val cursor = (context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager)
+                        .query(query)
+
+                    if (cursor.moveToFirst()) {
+                        val bytesDownloadedIndex = cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR)
+                        val totalSizeIndex = cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES)
+
+                        val bytesDownloaded = cursor.getInt(bytesDownloadedIndex)
+                        val totalBytes = cursor.getInt(totalSizeIndex)
+
+                        if (totalBytes > 0) {
+                            val progress = (bytesDownloaded * 100 / totalBytes)
+                            onProgress(progress)
+
+                            // 检查下载是否完成
+                            val statusIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)
+                            val status = cursor.getInt(statusIndex)
+
+                            if (status == DownloadManager.STATUS_SUCCESSFUL) {
+                                "下载完成".showToast(context)
+                                cursor.close()
+                                break
+                            } else if (status == DownloadManager.STATUS_FAILED) {
+                                "下载失败".showToast(context)
+                                cursor.close()
+                                break
+                            }
+                        }
+                    }
+
+                    cursor.close()
+
+                    // 延迟 1 秒后再次查询
+                    kotlinx.coroutines.delay(1000)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error monitoring download: ${e.message}", e)
+                    break
+                }
+            }
+        }
+    }
+
+    /**
+     * 获取文件的 MIME 类型
+     */
+    private fun getMimeType(fileName: String): String {
+        val extension = fileName.substringAfterLast('.', "").lowercase()
+        return when (extension) {
+            "pdf" -> "application/pdf"
+            "doc", "docx" -> "application/msword"
+            "xls", "xlsx" -> "application/vnd.ms-excel"
+            "ppt", "pptx" -> "application/vnd.ms-powerpoint"
+            "jpg", "jpeg" -> "image/jpeg"
+            "png" -> "image/png"
+            "gif" -> "image/gif"
+            "mp3" -> "audio/mpeg"
+            "mp4" -> "video/mp4"
+            "txt" -> "text/plain"
+            "zip" -> "application/zip"
+            "rar" -> "application/x-rar-compressed"
+            "apk" -> "application/vnd.android.package-archive"
+            else -> "*/*"
+        }
+    }
+
+    /**
+     * 删除文件（移到回收站）
+     */
+    fun deleteFiles(
+        fileIds: List<String>,
+        onSuccess: (() -> Unit)? = null
+    ) {
+        val token = loginManager.getLoginInfo()?.access_token
+        if (token == null) {
+            "请先登录".showToast(context)
+            return
+        }
+
+        if (fileIds.isEmpty()) {
+            "请选择要删除的文件".showToast(context)
+            return
+        }
+
+        // 将文件 ID 列表转换为逗号分隔的字符串
+        val fileIdsStr = fileIds.joinToString(",")
+        val req = DeleteFileRequest(fileIds = fileIdsStr)
+
+        FileInfoServiceClient.deleteFile(
+            req = req,
+            addHeaders = { it.addHeader("Authorization", "Bearer $token") },
+            onSuccess = { result ->
+                if (result.code == 200) {
+                    "成功删除 ${fileIds.size} 个文件".showToast(context)
+                    onSuccess?.invoke()
+                } else {
+                    result.message.showToast(context)
+                }
+            },
+            onFailure = { error ->
+                "删除失败：$error".showToast(context)
+                Log.e(TAG, "Delete files failed: $error")
+            }
+        )
+    }
+
+    /**
+     * 重命名文件
+     */
+    fun renameFile(
+        fileId: String,
+        newFileName: String,
+        onSuccess: (() -> Unit)? = null
+    ) {
+        val token = loginManager.getLoginInfo()?.access_token
+        if (token == null) {
+            "请先登录".showToast(context)
+            return
+        }
+
+        if (fileId.isEmpty()) {
+            "文件 ID 不能为空".showToast(context)
+            return
+        }
+
+        if (newFileName.isEmpty()) {
+            "文件名不能为空".showToast(context)
+            return
+        }
+
+        if (newFileName.length > 255) {
+            "文件名长度不能超过 255".showToast(context)
+            return
+        }
+
+        val req = RenameRequest(
+            fileId = fileId,
+            fileName = newFileName.trim()
+        )
+
+        FileInfoServiceClient.rename(
+            req = req,
+            addHeaders = { it.addHeader("Authorization", "Bearer $token") },
+            onSuccess = { result ->
+                if (result.code == 200) {
+                    "重命名成功".showToast(context)
+                    Log.d(TAG, "renameFile: $result")
+                    onMain {
+                        (context as? android.app.Activity)?.runOnUiThread {
+                            onSuccess?.invoke()
+                        }
+                    }
+                } else {
+                    when (result.code) {
+                        409 -> "文件名已存在".showToast(context)
+                        else -> result.message.showToast(context)
+                    }
+                }
+            },
+            onFailure = { error ->
+                "重命名失败：$error".showToast(context)
+                Log.e(TAG, "Rename file failed: $error")
             }
         )
     }

@@ -13,10 +13,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.computer.skyvault.R
 import com.computer.skyvault.adapter.RecycleItemCustomNavAdapter
-import com.computer.skyvault.databinding.ModuleCustomNavigationViewBinding
 import com.computer.skyvault.common.recycleitem.HeaderItem
 import com.computer.skyvault.common.recycleitem.MenuItem
 import com.computer.skyvault.common.recycleitem.NavItem
+import com.computer.skyvault.databinding.CustomviewLinearlayoutNavigationViewBinding
 
 class CustomNavigationView @JvmOverloads constructor(
     context: Context,
@@ -24,7 +24,7 @@ class CustomNavigationView @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : LinearLayout(context, attrs, defStyleAttr) {
 
-    private lateinit var binding: ModuleCustomNavigationViewBinding
+    private lateinit var binding: CustomviewLinearlayoutNavigationViewBinding
 
     private lateinit var navHeaderLinearLayout: LinearLayout
     private lateinit var recyclerViewMenu: RecyclerView
@@ -49,7 +49,7 @@ class CustomNavigationView @JvmOverloads constructor(
     }
 
     private fun setupView() {
-        binding = ModuleCustomNavigationViewBinding.inflate(LayoutInflater.from(context), this, true)
+        binding = CustomviewLinearlayoutNavigationViewBinding.inflate(LayoutInflater.from(context), this, true)
 
         // 初始化视图
         navHeaderLinearLayout = binding.navHeader
