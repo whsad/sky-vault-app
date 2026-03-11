@@ -14,7 +14,7 @@ import java.io.IOException
 
 object ApiClient {
     const val TAG = "ApiClient"
-    const val IP = "10.21.52.198"
+    const val IP = "10.21.52.153"
     const val PORT = "8080"
     const val BASE_URL = "http://$IP:$PORT/v1/api/"
     const val GET = "GET"

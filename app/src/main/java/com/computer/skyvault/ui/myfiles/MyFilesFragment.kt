@@ -4,12 +4,11 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AnimationUtils
-import android.widget.Button
-import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -18,19 +17,23 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.computer.skyvault.MainActivity
 import com.computer.skyvault.R
+import com.computer.skyvault.adapter.RecycleItemBreadcrumbPathAdapter
 import com.computer.skyvault.adapter.RecycleItemMyFilesFileFolderListAdapter
 import com.computer.skyvault.common.dto.LoadFileListRequest
 import com.computer.skyvault.common.dto.NewFolderRequest
-import com.computer.skyvault.common.enums.FileStatusEnum
+import com.computer.skyvault.common.enums.FileFolderTypeEnum
 import com.computer.skyvault.common.enums.FileTypeEnum
 import com.computer.skyvault.common.recycleitem.FileItem
 import com.computer.skyvault.databinding.MyfilesFragmentBinding
 import com.computer.skyvault.manager.LoginManager
+import com.computer.skyvault.model.FolderInfo
 import com.computer.skyvault.service.FileInfoService
 import com.computer.skyvault.service.FileShareService
 import com.computer.skyvault.ui.login.LoginActivity
 import com.computer.skyvault.utils.DataUtils
 import com.computer.skyvault.utils.showToast
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 
 private const val TAG = "MyFilesFragment"
 
@@ -43,12 +46,20 @@ class MyFilesFragment : Fragment() {
     private lateinit var fileShareService: FileShareService
     private lateinit var fileInfoService: FileInfoService
 
+    // 文件夹导航相关
+    private var currentFilePid: String = "0" // 当前文件夹 ID，默认为根目录
+    private val folderHistory = mutableListOf<FolderInfo>() // 文件夹访问历史（用于返回）
+    private lateinit var breadcrumbAdapter: RecycleItemBreadcrumbPathAdapter
+    private var currentFolderName: String = "My Files"
+
     // 文件选择器
     private val filePickerLauncher = registerForActivityResult(
         ActivityResultContracts.GetMultipleContents()
     ) { uris: List<Uri> ->
         if (uris.isNotEmpty()) {
-            fileInfoService.showUploadDialog(uris)
+            fileInfoService.showUploadDialog(uris, onFileSelectRequested = {
+                openFilePicker()
+            })
         }
     }
 
@@ -80,8 +91,15 @@ class MyFilesFragment : Fragment() {
                     adapter.toggleSelection(it.fileId)
                 } else {
                     // 普通状态下，点击打开文件
-                    Log.d(TAG, "Opening file: ${it.fileName}")
-                    "Opening: ${it.fileName}".showToast(requireContext())
+                    Log.d(TAG, "Opening: ${it.fileName}, folderType: ${it.folderType}")
+
+                    // 检查是否是文件夹
+                    if (it.folderType != null && it.folderType == FileFolderTypeEnum.FOLDER.value) {
+                        openFolder(it)
+                    } else {
+                        // 打开文件
+                        fileInfoService.openFile(it)
+                    }
                 }
             },
             onItemLongClick = {
@@ -115,13 +133,9 @@ class MyFilesFragment : Fragment() {
             lifecycleOwner = viewLifecycleOwner,
             loginManager = loginManager,
             binding = binding,
-            adapter = adapter
+            adapter = adapter,
+            currentFilePid = { currentFilePid }
         )
-
-        // 设置文件选择回调
-        fileInfoService.onFileSelectRequested = {
-            openFilePicker()
-        }
 
         // 设置底部操作栏点击事件
         setupBottomActionBarListeners()
@@ -140,7 +154,7 @@ class MyFilesFragment : Fragment() {
         // check login info
         val currentLoginInfo = loginManager.getLoginInfo()
         if (currentLoginInfo != null) {
-            Log.d(TAG, currentLoginInfo.access_token)
+            Log.d(TAG, "User logged in with token: ${currentLoginInfo.access_token}")
             loadFileList(
                 LoadFileListRequest(
                     pageNo = 1,
@@ -164,7 +178,130 @@ class MyFilesFragment : Fragment() {
             startActivity(Intent(requireContext(), LoginActivity::class.java))
             requireActivity().finish()
         }
+
+        setupBreadcrumbNavigation()
     }
+
+    /**
+     * 初始化面包屑导航
+     */
+    private fun setupBreadcrumbNavigation() {
+        breadcrumbAdapter = RecycleItemBreadcrumbPathAdapter { position ->
+            navigateToBreadcrumbPosition(position)
+        }
+
+        binding.fileDirectory.apply {
+            layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+            adapter = breadcrumbAdapter
+        }
+
+        updateBreadcrumb()
+    }
+
+    /**
+     * 打开文件夹
+     */
+    private fun openFolder(folderItem: FileItem) {
+        Log.d(TAG, "进入文件夹：${folderItem.fileId}, 名称：${folderItem.fileName}")
+
+        folderHistory.add(FolderInfo(currentFilePid, currentFolderName))
+
+        currentFilePid = folderItem.fileId
+        currentFolderName = folderItem.fileName
+
+        loadFileListInFolder(currentFilePid)
+        updateBreadcrumb()
+    }
+
+    /**
+     * 更新面包屑导航显示
+     */
+    private fun updateBreadcrumb() {
+        val paths = mutableListOf<String>()
+        paths.add("My Files")
+
+        folderHistory.forEach { folder ->
+            if (folder.id != "0") {
+                paths.add(folder.name)
+            }
+        }
+
+        if (currentFilePid != "0") {
+            paths.add(currentFolderName)
+        }
+
+        breadcrumbAdapter.submitList(paths)
+    }
+
+    /**
+     * 导航到指定的面包屑位置
+     */
+    private fun navigateToBreadcrumbPosition(position: Int) {
+        if (position == 0) {
+            currentFilePid = "0"
+            currentFolderName = "My Files"
+            folderHistory.clear()
+        } else {
+            val targetFolder = folderHistory[position - 1]
+            currentFilePid = targetFolder.id
+            currentFolderName = targetFolder.name
+
+            while (folderHistory.size >= position) {
+                folderHistory.removeAt(folderHistory.lastIndex)
+            }
+        }
+
+        loadFileListInFolder(currentFilePid)
+        updateBreadcrumb()
+    }
+
+    /**
+     * 返回上一级文件夹
+     */
+    private fun backToParentFolder() {
+        if (folderHistory.isEmpty()) {
+            "已经在根目录".showToast(requireContext())
+            return
+        }
+
+        val parentFolder = folderHistory.removeAt(folderHistory.lastIndex)
+        currentFilePid = parentFolder.id
+        currentFolderName = parentFolder.name
+
+        loadFileListInFolder(currentFilePid)
+        updateBreadcrumb()
+    }
+
+    /**
+     * 加载指定文件夹的内容
+     */
+    private fun loadFileListInFolder(filePid: String) {
+        val token = loginManager.getLoginInfo()?.access_token ?: run {
+            "请先登录".showToast(requireContext())
+            return
+        }
+
+        Log.d(TAG, "加载文件夹：$filePid")
+
+        loadFileList(
+            LoadFileListRequest(
+                pageNo = 1,
+                pageSize = 100,
+                fileNameFuzzy = "",
+                category = "all",
+                filePid = filePid
+            ),
+            token
+        )
+    }
+
+    /**
+     * 更新 ActionBar 标题
+     */
+    private fun updateActionBarTitle(title: String) {
+        (requireActivity() as? MainActivity)?.supportActionBar?.title = title
+    }
+
 
     private fun openFilePicker() {
         filePickerLauncher.launch("*/*")
@@ -176,10 +313,8 @@ class MyFilesFragment : Fragment() {
         val view = inflater.inflate(R.layout.module_dialog_create_folder, null)
         dialog.setView(view)
 
-        val etFolderName =
-            view.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etFolderName)
-        val tilFolderName =
-            view.findViewById<com.google.android.material.textfield.TextInputLayout>(R.id.tilFolderName)
+        val etFolderName = view.findViewById<TextInputEditText>(R.id.etFolderName)
+        val tilFolderName = view.findViewById<TextInputLayout>(R.id.tilFolderName)
 
         dialog.setPositiveButton("完成") { _, _ ->
             val folderName = etFolderName.text.toString().trim()
@@ -189,7 +324,7 @@ class MyFilesFragment : Fragment() {
             }
 
             fileInfoService.createFolder(
-                NewFolderRequest("0", folderName),
+                NewFolderRequest(currentFilePid, folderName),
                 token
             ) {
                 refreshFileList()
@@ -228,7 +363,7 @@ class MyFilesFragment : Fragment() {
     private fun refreshFileList() {
         val token = loginManager.getLoginInfo()?.access_token ?: return
         loadFileList(
-            LoadFileListRequest(1, 15, "", "all", "0"),
+            LoadFileListRequest(1, 15, "", "all", currentFilePid),
             token
         )
     }
@@ -241,6 +376,24 @@ class MyFilesFragment : Fragment() {
         binding.bottomActionBar.btnFavorite.setOnClickListener { favoriteSelectedFiles() }
         binding.bottomActionBar.btnRename.setOnClickListener { renameSelectedFiles() }
         binding.bottomActionBar.btnFileDetails.setOnClickListener { showFileDetails() }
+
+        // 添加返回键监听
+        binding.root.apply {
+            isFocusableInTouchMode = true
+            requestFocus()
+            setOnKeyListener { _, keyCode, event ->
+                if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_BACK) {
+                    if (currentFilePid != "0" || folderHistory.isNotEmpty()) {
+                        backToParentFolder()
+                        true
+                    } else {
+                        false
+                    }
+                } else {
+                    false
+                }
+            }
+        }
     }
 
     private fun showTopSelectionBar(selectedCount: Int) {
@@ -400,19 +553,30 @@ class MyFilesFragment : Fragment() {
 
         val operateDesc = view.findViewById<TextView>(R.id.operateDesc)
         val fileCover = view.findViewById<AppCompatImageView>(R.id.fileCover)
-        val etFolderName =
-            view.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etFolderName)
-        val tilFolderName =
-            view.findViewById<com.google.android.material.textfield.TextInputLayout>(R.id.tilFolderName)
+        val etFolderName = view.findViewById<TextInputEditText>(R.id.etFolderName)
+        val tilFolderName = view.findViewById<TextInputLayout>(R.id.tilFolderName)
 
         // 设置操作说明
         operateDesc.text = "重命名"
         val typeEnum = FileTypeEnum.getByType(fileItem.fileType)
         DataUtils.setFileCoverByType(typeEnum, fileItem, fileCover)
 
+        // 分离文件名和后缀
+        val fileNameWithoutExtension = fileItem.fileName.substringBeforeLast('.', fileItem.fileName)
+        val fileExtension = if (fileItem.fileName.contains('.')) {
+            "." + fileItem.fileName.substringAfterLast('.')
+        } else {
+            ""
+        }
+
+        // 设置当前文件后缀
+        tilFolderName.suffixText = fileExtension
+
         // 设置当前文件名
-        etFolderName.setText(fileItem.fileName)
-        etFolderName.setSelection(fileItem.fileName.length)
+        etFolderName.setText(fileNameWithoutExtension)
+        etFolderName.setSelection(fileNameWithoutExtension.length)
+
+
 
         dialog.setPositiveButton("确定") { _, _ ->
             val newFileName = etFolderName.text.toString().trim()
@@ -474,7 +638,6 @@ class MyFilesFragment : Fragment() {
     }
 
 
-
     fun exitSelectionMode() = adapter.exitSelectionMode()
 
     fun checkAll(isCheckAll: Boolean) = adapter.checkAll(isCheckAll)
@@ -484,5 +647,8 @@ class MyFilesFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+
+        // 清空历史记录
+        folderHistory.clear()
     }
 }

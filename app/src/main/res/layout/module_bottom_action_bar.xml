@@ -6,7 +6,7 @@
     android:layout_height="wrap_content"
     android:background="#ffffff"
     android:scrollbars="none"
-    android:visibility="visible">
+    android:visibility="gone">
 
     <!-- 顶部灰色分隔线 -->
     <LinearLayout

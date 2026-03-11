@@ -84,6 +84,26 @@ enum class FileTypeEnum(
         emptyList(), "others");
 
     /**
+     * 获取对应的 MIME Type
+     */
+    fun getMimeType(): String {
+        return when (this) {
+            IMAGE -> "image/*"
+            VIDEO -> "video/*"
+            AUDIO -> "audio/*"
+            PDF -> "application/pdf"
+            WORD -> "application/msword"
+            EXCEL -> "application/vnd.ms-excel"
+            TXT -> "text/plain"
+            CODE -> "text/plain"
+            ZIP -> "application/zip"
+            APP -> "application/vnd.android.package-archive"
+            BT_SEEDS -> "application/x-bittorrent"
+            OTHERS -> "*/*"
+        }
+    }
+
+    /**
      * 根据文件后缀获取文件类型
      */
     companion object {
@@ -97,6 +117,22 @@ enum class FileTypeEnum(
          */
         fun getByType(typeCode: Int?): FileTypeEnum? {
             return FileTypeEnum.entries.find { it.typeCode == typeCode }
+        }
+
+        /**
+         * 根据文件后缀获取 MIME Type
+         */
+        fun getMimeTypeBySuffix(suffix: String): String {
+            val fileType = getFileTypeBySuffix(suffix)
+            return fileType.getMimeType()
+        }
+
+        /**
+         * 根据类型码获取 MIME Type
+         */
+        fun getMimeTypeByType(typeCode: Int?): String {
+            val fileType = getByType(typeCode)
+            return fileType?.getMimeType() ?: "*/*"
         }
     }
 
@@ -119,13 +155,22 @@ enum class FileTypeEnum(
 enum class UploadStatusEnum(val status: Int) {
     INSTANT_UPLOAD(0),
     UPLOADING(1),
-    UPLOAD_FINISH(2)
+    UPLOAD_FINISH(2);
 }
 
-enum class FileStatusEnum(val value: Int) {
+enum class FileStatusEnum(val status: Int) {
     TRANSCODING(0),
     TRANSCODE_FAILED(1),
-    TRANSCODE_COMPLETED(2)
+    TRANSCODE_COMPLETED(2);
+
+    companion object {
+        /**
+         * 根据类型码获取文件类型
+         */
+        fun getByType(statusCode: Int?): FileStatusEnum? {
+            return FileStatusEnum.entries.find { it.status == statusCode }
+        }
+    }
 }
 
 enum class DelFlagEnum(val value: Int) {

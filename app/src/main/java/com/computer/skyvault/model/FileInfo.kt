@@ -21,3 +21,8 @@ data class FileInfo(
     val recoveryTime: Date? = null, // 回收站时间
     val delFlag: Int = 2 // 删除标记
 )
+
+data class FolderInfo(
+    val id: String,
+    val name: String
+)

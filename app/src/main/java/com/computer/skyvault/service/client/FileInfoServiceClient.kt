@@ -12,7 +12,6 @@ import com.computer.skyvault.common.vo.PageResponseResult
 import com.computer.skyvault.common.vo.R
 import com.computer.skyvault.common.vo.UploadResultVo
 import com.computer.skyvault.utils.ApiClient
-import com.computer.skyvault.utils.ApiClient.client
 import com.computer.skyvault.utils.DataUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -129,7 +128,6 @@ object FileInfoServiceClient {
                 }
 
                 val responseBody = response.body?.string()
-//                val result = DataUtils.parseJsonObj<R<Map<String, Any>>>(responseBody.orEmpty())
                 val result = DataUtils.parseJsonObj<R<UploadResultVo>>(responseBody.orEmpty())
                 if (result?.code != 200) {
                     return@withContext Result.failure(Exception("Upload failed: ${result?.message}, code: ${result?.code}"))
@@ -195,26 +193,11 @@ object FileInfoServiceClient {
         )
     }
 
-    fun downloadFile(
-        code: String,
-        onSuccess: (okhttp3.Response) -> Unit,
-        onFailure: (String) -> Unit
-    ) {
-        val url = "${ApiClient.BASE_URL}$PREFIX/download/$code"
-        val request = Request.Builder()
-            .url(url)
-            .get()
-            .build()
-
-        client.newCall(request).enqueue(object : okhttp3.Callback {
-            override fun onFailure(call: okhttp3.Call, e: java.io.IOException) {
-                ApiClient.onMain { onFailure("Network Error: ${e.message}") }
-            }
-
-            override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
-                ApiClient.onMain { onSuccess(response) }
-            }
-        })
+    /**
+     * 获取下载 URL（拼接完整的下载链接）
+     */
+    fun getDownloadUrl(code: String): String {
+        return "${ApiClient.BASE_URL}file/download/$code"
     }
 
     /**

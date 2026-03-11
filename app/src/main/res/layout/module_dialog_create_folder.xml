@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -9,11 +10,11 @@
         android:id="@+id/operateDesc"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
+        android:text="新建文件夹"
         android:textAlignment="center"
         android:textSize="24sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="20dp"
-        android:text="新建文件夹"/>
+        android:textStyle="bold" />
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/fileCover"
@@ -22,20 +23,40 @@
         android:layout_gravity="center_horizontal"
         android:src="@drawable/ic_file_type_folder" />
 
+    <!--    <com.google.android.material.textfield.TextInputLayout-->
+    <!--        android:id="@+id/tilFolderName"-->
+    <!--        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="wrap_content"-->
+    <!--        android:layout_marginTop="24dp"-->
+    <!--        android:hint="文件名">-->
+
+    <!--        <com.google.android.material.textfield.TextInputEditText-->
+    <!--            android:id="@+id/etFolderName"-->
+    <!--            android:layout_width="match_parent"-->
+    <!--            android:layout_height="wrap_content"-->
+    <!--            android:inputType="text"-->
+    <!--            android:text="新建文件夹" />-->
+
+    <!--    </com.google.android.material.textfield.TextInputLayout>-->
+
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tilFolderName"
-        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:hint="文件名">
+        android:hint="文件名"
+        app:errorEnabled="true"
+        app:suffixTextColor="@color/gray">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etFolderName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="text"
-            android:text="新建文件夹" />
+            android:text="新建文件夹"
+            android:maxLines="1"
+            android:singleLine="true" />
 
     </com.google.android.material.textfield.TextInputLayout>
 

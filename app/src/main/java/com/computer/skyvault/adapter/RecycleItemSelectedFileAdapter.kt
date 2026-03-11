@@ -14,7 +14,9 @@ class RecycleItemSelectedFileAdapter(
 
     private val formatter = DecimalFormat("#,### KB")
 
-    inner class ViewHolder(private val binding: ModuleRecycleItemSelectedFileBinding): RecyclerView.ViewHolder(binding.root) {
+    inner class ViewHolder(
+        private val binding: ModuleRecycleItemSelectedFileBinding
+    ) : RecyclerView.ViewHolder(binding.root) {
         init {
             binding.root.setOnClickListener {
                 val position = bindingAdapterPosition

@@ -19,21 +19,12 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <TextView
-            android:id="@+id/root_directory"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="10dp"
-            android:text="My Files"
-            android:textColor="@color/md_theme_onSurfaceVariant"
-            android:textSize="14sp" />
-
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/file_directory"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            tools:listitem="@null" />
+            android:overScrollMode="never"
+            android:clipToPadding="false" />
     </LinearLayout>
 
     <!-- Search bar -->
@@ -94,6 +85,8 @@
             app:iconGravity="start"
             app:iconPadding="8dp" />
     </LinearLayout>
+
+
 
     <!-- 文件列表 -->
     <androidx.recyclerview.widget.RecyclerView
