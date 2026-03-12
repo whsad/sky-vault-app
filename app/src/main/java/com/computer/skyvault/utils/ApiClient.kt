@@ -10,6 +10,7 @@ import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.Response
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 
 
 object ApiClient {
@@ -25,6 +26,15 @@ object ApiClient {
     val client: OkHttpClient by lazy {
         OkHttpClient.Builder().build()
     }
+
+    val okHttpClient by lazy {
+        OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .build()
+    }
+
 
     fun onMain(block: () -> Unit) {
         Handler(Looper.getMainLooper()).post { block() }
@@ -61,7 +71,7 @@ object ApiClient {
 
         val request = requestBuilder.build()
 
-        client.newCall(request).enqueue(object : Callback {
+        okHttpClient.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 Log.e(TAG, "Request failed: ${e.message}")
                 onMain { onFailure("Network Error") }

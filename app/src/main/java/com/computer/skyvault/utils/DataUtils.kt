@@ -86,14 +86,69 @@ object DataUtils {
         imageView: AppCompatImageView
     ) {
 
-        when (fileType) {
+        try {
+            when (fileType) {
+                FileTypeEnum.IMAGE -> {
+                    val imageUrl = FileInfoServiceClient.getFileCoverPath(item.fileCover.toString())
+                    // 其他图片格式正常加载
+                    Log.d(TAG, "加载图片：$imageUrl")
+                    Glide.with(imageView)
+                        .load(imageUrl)
+                        .placeholder(R.drawable.ic_file_type_image)
+                        .error(R.drawable.ic_file_type_image)
+                        .diskCacheStrategy(DiskCacheStrategy.ALL)
+                        .into(imageView)
+                }
+
+                FileTypeEnum.VIDEO -> {
+                    // 视频文件的封面图可能是任意格式（包括 SVG）
+                    val imageUrl = FileInfoServiceClient.getFileCoverPath(item.fileCover.toString())
+                    if (imageUrl.isNotEmpty() && imageUrl != "null") {
+                        Log.d(TAG, "加载视频封面：$imageUrl")
+                        Glide.with(imageView)
+                            .load(imageUrl)
+                            .placeholder(R.drawable.ic_file_type_video)
+                            .error(R.drawable.ic_file_type_video)
+                            .diskCacheStrategy(DiskCacheStrategy.ALL)
+                            .into(imageView)
+                    } else {
+                        // 没有封面图，显示默认视频图标
+                        imageView.setImageResource(R.drawable.ic_file_type_video)
+                    }
+                }
+
+                else -> {
+                    // 其他类型：直接设置静态图标资源
+                    val iconRes = when (fileType) {
+                        FileTypeEnum.AUDIO -> R.drawable.ic_file_type_audio
+                        FileTypeEnum.PDF -> R.drawable.ic_file_type_pdf
+                        FileTypeEnum.WORD -> R.drawable.ic_file_type_word
+                        FileTypeEnum.EXCEL -> R.drawable.ic_file_type_excel
+                        FileTypeEnum.TXT -> R.drawable.ic_file_type_txt
+                        FileTypeEnum.CODE -> R.drawable.ic_file_type_code
+                        FileTypeEnum.ZIP -> R.drawable.ic_file_type_zip
+                        FileTypeEnum.APP -> R.drawable.ic_file_type_app
+                        FileTypeEnum.BT_SEEDS -> R.drawable.ic_file_type_bt
+                        FileTypeEnum.OTHERS -> R.drawable.ic_file_type_other
+                        else -> R.drawable.ic_file_type_folder
+                    }
+                    imageView.setImageResource(iconRes)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "setFileCoverByType error: ${e.message}")
+            // 出错时显示默认图标
+            imageView.setImageResource(R.drawable.ic_file_type_other)
+        }
+
+        /*when (fileType) {
             FileTypeEnum.IMAGE, FileTypeEnum.VIDEO -> {
                 val imageUrl = FileInfoServiceClient.getFileCoverPath(item.fileCover.toString())
 
                 // 使用 Glide 加载封面图（仅 IMAGE/VIDEO）
                 Glide.with(imageView)
                     .load(imageUrl)
-                    .placeholder(R.drawable.ic_file_type_folder)  // 加载中占位图
+                    .placeholder(R.drawable.ic_file_type_image)  // 加载中占位图
                     .error(R.drawable.ic_file_type_other)         // 失败回退图
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
                     .into(imageView)
@@ -116,7 +171,7 @@ object DataUtils {
                 }
                 imageView.setImageResource(iconRes)
             }
-        }
+        }*/
     }
 }
 

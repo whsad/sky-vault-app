@@ -122,7 +122,7 @@ object FileInfoServiceClient {
                     .addHeader("Authorization", "Bearer $token")
                     .build()
 
-                val response = ApiClient.client.newCall(request).execute()
+                val response = ApiClient.okHttpClient.newCall(request).execute()
                 if (!response.isSuccessful) {
                     return@withContext Result.failure(Exception("Upload failed: ${response.code}"))
                 }

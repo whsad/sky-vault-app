@@ -1,5 +1,6 @@
 [versions]
 agp = "8.10.1"
+fragmentKtx = "1.6.1"
 glide = "4.16.0"
 kotlin = "2.0.21"
 kotlinReflect = "2.0.21"
@@ -20,6 +21,7 @@ recyclerview = "1.3.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-fragment-ktx = { module = "androidx.fragment:fragment-ktx", version.ref = "fragmentKtx" }
 androidx-recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "recyclerview" }
 glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }

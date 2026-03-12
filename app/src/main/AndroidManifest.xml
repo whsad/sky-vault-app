@@ -2,19 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- 基础网络权限 -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
-    <!-- 存储权限适配全版本 -->
-    <!-- Android 10 以下：WRITE_EXTERNAL_STORAGE -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28"
         tools:ignore="ScopedStorage" />
-    <!-- Android 11+：访问公共目录需要 MANAGE_EXTERNAL_STORAGE（高危权限） -->
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
-        tools:ignore="ScopedStorage" />
-    <!-- Android 13+：媒体文件访问权限（可选） -->
+        tools:ignore="ScopedStorage,SelectedPhotoAccess" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
@@ -32,20 +26,7 @@
         android:usesCleartextTraffic="true"
         android:requestLegacyExternalStorage="true"
         tools:targetApi="33">
-<!--        <activity-->
-<!--            android:name=".MainActivity"-->
-<!--            android:exported="true"-->
-<!--            android:theme="@style/AppTheme">-->
-<!--            <intent-filter>-->
-<!--                <action android:name="android.intent.action.MAIN" />-->
 
-<!--                <category android:name="android.intent.category.LAUNCHER" />-->
-<!--            </intent-filter>-->
-<!--        </activity>-->
-<!--        <activity-->
-<!--            android:name=".ui.login.LoginActivity"-->
-<!--            android:exported="false" />-->
-        <!-- 添加 FileProvider 配置 -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

@@ -11,6 +11,7 @@ class RecycleItemBreadcrumbPathAdapter(
 ) : RecyclerView.Adapter<RecycleItemBreadcrumbPathAdapter.ViewHolder>() {
 
     private var items: List<String> = emptyList()
+    val currentList: List<String> get() = items
 
     inner class ViewHolder(
         private val binding: RecycleItemBreadcrumbPathBinding
@@ -50,4 +51,6 @@ class RecycleItemBreadcrumbPathAdapter(
         items = newItems
         notifyDataSetChanged()
     }
+
+
 }

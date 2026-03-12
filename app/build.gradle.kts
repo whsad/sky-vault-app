@@ -19,7 +19,10 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
     compileOptions {
@@ -48,7 +51,7 @@ dependencies {
     implementation(libs.kotlin.reflect)
     implementation(libs.glide)
     implementation(libs.androidx.recyclerview)
-    implementation("androidx.fragment:fragment-ktx:1.6.1")
+    implementation(libs.androidx.fragment.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

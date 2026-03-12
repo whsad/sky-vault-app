@@ -4,8 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingTop="12dp"
     android:background="#ffffff"
+    android:paddingTop="12dp"
     tools:context=".ui.myfiles.MyFilesFragment">
 
     <!-- File directory navigation bar -->
@@ -23,8 +23,8 @@
             android:id="@+id/file_directory"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:overScrollMode="never"
-            android:clipToPadding="false" />
+            android:clipToPadding="false"
+            android:overScrollMode="never" />
     </LinearLayout>
 
     <!-- Search bar -->
@@ -32,9 +32,11 @@
         android:id="@+id/search_layout"
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
         android:layout_width="0dp"
-        android:layout_height="52dp"
+        android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:paddingHorizontal="12dp"
+        app:hintEnabled="false"
+        app:startIconDrawable="@drawable/ic_search"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/file_directory_navigation_bar">
@@ -43,10 +45,60 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:hint="Search files and folders..."
-            android:inputType="text"
-            android:textSize="16sp" />
+            android:inputType="text" />
 
     </com.google.android.material.textfield.TextInputLayout>
+
+    <!--    &lt;!&ndash; Search bar &ndash;&gt;-->
+    <!--    <com.google.android.material.textfield.TextInputLayout-->
+    <!--        android:id="@+id/search_layout"-->
+    <!--        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"-->
+    <!--        android:layout_width="0dp"-->
+    <!--        android:layout_height="wrap_content"-->
+    <!--        android:layout_marginTop="8dp"-->
+    <!--        android:minHeight="56dp"-->
+    <!--        android:paddingHorizontal="12dp"-->
+    <!--        app:boxCollapsedPaddingTop="8dp"-->
+    <!--        app:layout_constraintEnd_toEndOf="parent"-->
+    <!--        app:layout_constraintStart_toStartOf="parent"-->
+    <!--        app:layout_constraintTop_toBottomOf="@id/file_directory_navigation_bar">-->
+
+    <!--        <com.google.android.material.textfield.TextInputEditText-->
+    <!--            android:layout_width="match_parent"-->
+    <!--            android:layout_height="wrap_content"-->
+    <!--            android:hint="Search files and folders..."-->
+    <!--            android:inputType="text"-->
+    <!--            android:maxLines="1"-->
+    <!--            android:minHeight="48dp"-->
+    <!--            android:singleLine="true" />-->
+
+    <!--    </com.google.android.material.textfield.TextInputLayout>-->
+
+    <!--    &lt;!&ndash; Email 输入框 &ndash;&gt;-->
+    <!--    <com.google.android.material.textfield.TextInputLayout-->
+    <!--        android:id="@+id/search_layout"-->
+    <!--        android:layout_width="0dp"-->
+    <!--        android:layout_height="wrap_content"-->
+    <!--        android:background="@drawable/bg_verification_input"-->
+    <!--        app:boxBackgroundColor="@android:color/transparent"-->
+    <!--        app:boxStrokeWidthFocused="0dp"-->
+    <!--        app:boxStrokeWidth="0dp"-->
+    <!--        app:hintEnabled="false"-->
+    <!--        app:layout_constraintEnd_toEndOf="parent"-->
+    <!--        app:layout_constraintStart_toStartOf="parent"-->
+    <!--        app:layout_constraintTop_toBottomOf="@id/file_directory_navigation_bar"-->
+    <!--        app:layout_constraintVertical_chainStyle="packed"-->
+    <!--        app:startIconContentDescription="Email"-->
+    <!--        app:startIconDrawable="@drawable/ic_email"-->
+    <!--        app:startIconTint="#69767f"-->
+    <!--        android:paddingHorizontal="12dp">-->
+
+    <!--        <com.google.android.material.textfield.TextInputEditText-->
+    <!--            android:layout_width="match_parent"-->
+    <!--            android:layout_height="match_parent"-->
+    <!--            android:hint="email"-->
+    <!--            android:inputType="textEmailAddress" />-->
+    <!--    </com.google.android.material.textfield.TextInputLayout>-->
 
     <!-- 操作按钮组 -->
     <LinearLayout
@@ -87,7 +139,6 @@
     </LinearLayout>
 
 
-
     <!-- 文件列表 -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/file_folder_list"
@@ -107,7 +158,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
